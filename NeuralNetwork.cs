@@ -490,4 +490,3 @@ public class NeuralNetwork
         File.WriteAllLines(filePath, saveData);
     }
 }
-//A
