@@ -1,6 +1,9 @@
 namespace NeuralNetwork;
 
-public class Functions
+public static class Functions
 {
-    
+    public static double Sigmoid(double x)
+    {
+        return 1 / (1 + Math.Exp(-x));
+    }
 }
