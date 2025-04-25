@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace NeuralNetwork;
 
 public class Neuron
@@ -155,19 +157,24 @@ public class Neuron
            case ActivationType.RElu:
                return Math.Max(0, result);
            case ActivationType.AND:
-               return result*result/4 + result/2 - 1;
+               return Functions.And(result);
            case ActivationType.NAND:
-               return -result*result/4 - result/2 + 1;
+               return Functions.Nand(result);
            case ActivationType.OR:
-               return -result*result/4 + result/2 + 1;
+               return Functions.Or(result);
            case ActivationType.NOR:
-               return result*result/4 - result/2 - 1;
+               return Functions.Nor(result);
            case ActivationType.EX:
-               return -result*result/2 + 1;
+               return Functions.Ex(result);
            case ActivationType.NEX:
-               return result*result/2 - 1;
+               return Functions.Nex(result);
+           default:
+               return 0;
        }
-       return result;
+   }
+
+   public override string ToString()
+   {
+       return $"{_dimensions};" + $"{string.Join(",", _weights.Select(w => w.ToString(CultureInfo.InvariantCulture)))};" + $"{_bias.ToString(CultureInfo.InvariantCulture)};" + $"{_activation};" + $"{string.Join(",", _parents)}\n";
    }
 }
-//A

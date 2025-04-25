@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace NeuralNetwork;
 
 public class Layer
@@ -42,5 +44,14 @@ public class Layer
             resultFactors[i] = _neurons[i].Process(inputs);
         }
         return resultFactors.ToList();
+    }
+
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append(_size + "\n");
+        foreach (Neuron neuron in _neurons)
+            sb.Append(neuron);
+        return sb.ToString();
     }
 }

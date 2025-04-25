@@ -1,4 +1,5 @@
 namespace NeuralNetwork;
+
 using System.Globalization;
 using System;
 using System.IO;
@@ -68,9 +69,39 @@ public class NeuralNetwork
         }
     }
 
+    public Layer this[int layer]
+    {
+        get => _networkLayers![layer];
+        set => _networkLayers![layer] = value;
+    }
+    
+    public Neuron this[int layer, int neuron]
+    {
+        get => _networkLayers![layer].GetNeurons()[neuron];
+        set => _networkLayers![layer].SetNeuron(neuron, value);
+    }
+
+    public double this[int layer, int neuron, int weightOrBias]
+    {
+        get
+        {
+            if (weightOrBias < 0)
+                return _networkLayers![layer].GetNeurons()[neuron].GetBias();
+            return _networkLayers![layer].GetNeurons()[neuron].GetWeights()[weightOrBias];
+        }
+        set
+        {
+            if (weightOrBias < 0)
+                _networkLayers![layer].GetNeurons()[neuron].SetBias(value);
+            else
+                _networkLayers![layer].GetNeurons()[neuron].GetWeights()[weightOrBias] = value;
+        }
+    }
+
     public void SetLearningRate(double learningRate) => _learningRate = learningRate;
     public ushort GetLayerCount() => (ushort)_layerCount!;
     public Layer[] GetLayers() => _networkLayers!;
+    public string GetName() => _name!;
     public void SetLayer(ushort i, Layer l) => _networkLayers![i] = l;
     public void SetNeuron(ushort layer, ushort neuron, ushort dimensions, string activation, ushort[] parents) => _networkLayers![layer].GetNeurons()[neuron] = new Neuron(layer, neuron, dimensions, activation, parents);
     public void SetLoss(string loss)
@@ -151,7 +182,7 @@ public class NeuralNetwork
         {
             string[] parts = line.Split(";");
             string input = parts[0];
-            double target = double.Parse(parts[1], CultureInfo.InvariantCulture); // Add invariant culture
+            double target = double.Parse(parts[1], CultureInfo.InvariantCulture);
             total += Math.Abs(target - ProcessSingle(input));
         }
         return (1 - total / data.Length) * 100;
@@ -165,7 +196,7 @@ public class NeuralNetwork
         {
             string[] parts = line.Split(";");
             string input = parts[0];
-            double target = double.Parse(parts[1], CultureInfo.InvariantCulture); // Add invariant culture
+            double target = double.Parse(parts[1], CultureInfo.InvariantCulture);
             double predicted = ProcessSingle(input);
             Console.WriteLine($"Input: {input} Expected: {target} Predicted: {predicted}");
             total += Math.Abs(target - predicted);
@@ -173,23 +204,13 @@ public class NeuralNetwork
         Console.WriteLine($"Accuracy: {100 * (1 - total / data.Length)}%");
     }
     
-    public new string ToString()
+    public override string ToString()
     {
         StringBuilder sb = new StringBuilder(); 
-        sb.Append(_name + ";" + _lossFunction + ";" + _learningRate + ";" + _seed + ";" + _layerCount + ";");
-        for (int i = 0; i < _layerCount; i++)
-        {
-            sb.Append(_networkLayers![i].GetSize() + ";");
-            for (int j = 0; j < _networkLayers[i].GetSize(); j++)
-            {
-                sb.Append(_networkLayers[i].GetNeurons()[j].GetDimensions() + ";");
-                for (int k = 0; k < _networkLayers[i].GetNeurons()[j].GetDimensions(); k++)
-                    sb.Append(_networkLayers[i].GetNeurons()[j].GetWeights()[k] + ";");
-                sb.Append(_networkLayers[i].GetNeurons()[j].GetBias() + ";" + _networkLayers[i].GetNeurons()[j].GetActivation() + ";");
-                for (int k = 0; k < _networkLayers[i].GetNeurons()[j].GetDimensions(); k++)
-                    sb.Append(_networkLayers[i].GetNeurons()[j].GetParents()[k] + ";");
-            }
-        }
+        sb.Append($"{_name};{_lossFunction};{_learningRate?.ToString(CultureInfo.InvariantCulture)};{_seed?.ToString(CultureInfo.InvariantCulture)};{_layerCount}\n");
+        foreach (Layer layer in _networkLayers!)
+            sb.Append(layer);
+        sb.Remove(sb.Length - 1, 1);
         return sb.ToString();
     }
 
@@ -265,11 +286,11 @@ public class NeuralNetwork
                                 activationDerivative = (weightedSum + 1) / 2;
                                 break;
                             case Neuron.ActivationType.NAND:
-                                activationOutput = -weightedSum * weightedSum / 4 + -weightedSum / 2 + 1;
+                                activationOutput = - weightedSum * weightedSum / 4 - weightedSum / 2 + 1;
                                 activationDerivative = -(weightedSum + 1) / 2;
                                 break;
                             case Neuron.ActivationType.OR:
-                                activationOutput = -weightedSum * weightedSum / 4 + weightedSum / 2 + 1;
+                                activationOutput = - weightedSum * weightedSum / 4 + weightedSum / 2 + 1;
                                 activationDerivative = -(weightedSum - 1) / 2;
                                 break;
                             case Neuron.ActivationType.NOR:
@@ -476,17 +497,6 @@ public class NeuralNetwork
 
     public void SaveToFile(string filePath)
     {
-        List<string> saveData = [$"{_name};{_lossFunction};{_learningRate?.ToString(CultureInfo.InvariantCulture)};{_seed?.ToString(CultureInfo.InvariantCulture)};{_layerCount}"];
-        foreach (Layer layer in _networkLayers!)
-        {
-            saveData.Add(layer.GetSize().ToString());
-            foreach (Neuron neuron in layer.GetNeurons())
-            {
-                string weights = string.Join(",", neuron.GetWeights().Select(w => w.ToString(CultureInfo.InvariantCulture)));
-                string parents = string.Join(",", neuron.GetParents());
-                saveData.Add($"{neuron.GetDimensions()};" + $"{weights};" + $"{neuron.GetBias().ToString(CultureInfo.InvariantCulture)};" + $"{neuron.GetActivation()};" + $"{parents}");
-            }
-        }
-        File.WriteAllLines(filePath, saveData);
+        File.WriteAllText(filePath, ToString());
     }
 }
