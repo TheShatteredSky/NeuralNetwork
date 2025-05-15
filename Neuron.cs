@@ -104,7 +104,6 @@ public class Neuron
                _activation = ActivationType.NEX;
                break;
            default:
-               Console.WriteLine($"Neuron {_layerIdentifier};{_identifier} has invalid activation '{activation}'. Defaulting to Linear.");
                _activation = ActivationType.Linear;
                break;
        }
