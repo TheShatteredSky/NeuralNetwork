@@ -11,11 +11,14 @@ public class Neuron
    private double[] _weights;
    private double _bias;
    private ActivationType _activation;
-   private ushort[] _parents;
+   private ushort[]? _parents;
+   bool _hasParents;
+
+   public bool HasParents() =>  _hasParents;
    
    
    //Constructor for a neuron loaded from a save file.
-   public Neuron(ushort identifier, ushort layerIdentifier, ushort dimensions, double[] weights, double bias, string? activation, ushort[] parents)
+   public Neuron(ushort identifier, ushort layerIdentifier, ushort dimensions, double[] weights, double bias, string? activation, ushort[] parents, bool hasParents)
    {
        _identifier = identifier;
        _layerIdentifier = layerIdentifier;
@@ -58,10 +61,11 @@ public class Neuron
        _weights = weights;
        _bias = bias;
        _parents = parents;
+       _hasParents = hasParents;
    }
    
    //Newly created neuron constructor.
-   public Neuron(ushort identifier, ushort layerIdentifier, ushort dimensions, string? activation, ushort[] parents)
+   public Neuron(ushort identifier, ushort layerIdentifier, ushort dimensions, ActivationType ac, ushort[]? parents, bool hasParents)
    {
        _identifier = identifier;
        _layerIdentifier = layerIdentifier;
@@ -71,43 +75,9 @@ public class Neuron
        for (int i = 0; i < _weights.Length; i++)
            _weights[i] = random.NextDouble() - 0.5;
        _bias = random.NextDouble() - 0.5;
-       switch (activation)
-       {
-           case "RElu":
-               _activation = ActivationType.RElu;
-               break;
-           case "Sigmoid":
-               _activation = ActivationType.Sigmoid;
-               break;
-           case "Tanh":
-               _activation = ActivationType.Tanh;
-               break;
-           case "Linear":
-               _activation = ActivationType.Linear;
-               break;
-           case "AND":
-               _activation = ActivationType.AND;
-               break;
-           case "NAND":
-               _activation = ActivationType.NAND;
-               break;
-           case "OR":
-               _activation = ActivationType.OR;
-               break;
-           case "NOR":
-               _activation = ActivationType.NOR;
-               break;
-           case "EX":
-               _activation = ActivationType.EX;
-               break;
-           case "NEX":
-               _activation = ActivationType.NEX;
-               break;
-           default:
-               _activation = ActivationType.Linear;
-               break;
-       }
+       _activation = ac;
        _parents = parents;
+       _hasParents = hasParents;
    }
    
    public void SetDimensions(ushort dimensions) => _dimensions = dimensions;

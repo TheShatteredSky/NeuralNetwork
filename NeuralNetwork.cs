@@ -7,74 +7,75 @@ using System.Text;
 
 public class NeuralNetwork
 {
-    private readonly string? _name;
+    // Fields
+    private static Random _random = new Random();
+    private static readonly object Lock = new object();
+
+    private string? _name;
+    private NetworkType _type;
+
     private ushort? _layerCount;
     private Layer[]? _networkLayers;
+    private Layer? _inputLayer;
+    private Layer[]? _hiddenLayers;
+    private Layer? _outputLayer;
+
     private LossFunction? _lossFunction;
     private double? _learningRate;
-    private double? _seed;
-    private Random? _random;
+
+    //  Enums
     
-    //Empty constructor if I need it for whatever reason.
-    public NeuralNetwork()
-    {
-        
-    }
+    public enum NetworkType { Custom, BinaryClassification, GeneralClassification }
+    public enum LossFunction { CrossEntropy, MSE }
+
+    // Constructors
     
-    public NeuralNetwork(string name, ushort layerCount, string lossFunction)
+    public NeuralNetwork(string? name, NetworkType type)
     {
-        _name = name;
-        _layerCount = layerCount;
-        _networkLayers = new Layer[(ushort)_layerCount];
-        _random = new Random();
-        _seed = _random.NextDouble();
-        _lossFunction = Enum.Parse<LossFunction>(lossFunction, true);
+        _name = name ?? "NeuralNetwork";
+        _type = type;
     }
 
     public NeuralNetwork(string filePath)
     {
-        string[] save = File.ReadAllLines(filePath);
-        string[] header = save[0].Split(';');
-        if (header.Length != 5) throw new FormatException("Invalid file header");
-        _name = header[0];
-        _lossFunction = Enum.Parse<LossFunction>(header[1]);
-        _learningRate = double.Parse(header[2], CultureInfo.InvariantCulture);
-        _seed = double.Parse(header[3], CultureInfo.InvariantCulture);
-        _layerCount = ushort.Parse(header[4]);
-        _networkLayers = new Layer[(int)_layerCount];
-        int linePointer = 1;
-        for (int i = 0; i < _layerCount; i++)
-        {
-            if (linePointer >= save.Length)
-                throw new FormatException($"Missing layer data for layer {i}");
-            ushort neuronsInLayer = ushort.Parse(save[linePointer]);
-            linePointer++;
-            Layer currentLayer = new Layer((ushort)i, neuronsInLayer);
-            for (int k = 0; k < neuronsInLayer; k++)
-            {
-                if (linePointer >= save.Length)
-                    throw new FormatException($"Missing neuron data for layer {i} neuron {k}");
-                string[] neuronData = save[linePointer].Split(';');
-                if (neuronData.Length != 5)
-                    throw new FormatException($"Invalid neuron data at line {linePointer}");
-                ushort dimensions = ushort.Parse(neuronData[0]);
-                double[] weights = neuronData[1].Split(',').Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToArray();
-                double bias = double.Parse(neuronData[2], CultureInfo.InvariantCulture);
-                string activation = neuronData[3];
-                ushort[] parents = neuronData[4].Split(',').Select(ushort.Parse).ToArray();
-                currentLayer.SetNeuron(k, new Neuron((ushort)k, (ushort)i, dimensions, weights, bias, activation, parents));
-                linePointer++;
-            }
-            _networkLayers[i] = currentLayer;
-        }
+        LoadFromFile(filePath);
     }
 
+    //  Instantiation Methods
+
+    public void InstantiateBinaryClassification(ushort hiddenLayers, ushort hiddenLayersSize, ushort inputLayerSize)
+    {
+         /* ... */
+    }
+
+    public void InstantiateGeneralClassification(ushort hiddenLayers, ushort hiddenLayersSize, ushort inputLayerSize, ushort outputLayerSize)
+    {
+         /* ... */
+    }
+
+    // Setters
+    
+    public void SetLearningRate(double learningRate) => _learningRate = learningRate;
+    public void SetLoss(string loss) => _lossFunction = loss switch { "CrossEntropy" => LossFunction.CrossEntropy, _ => throw new ArgumentException("Invalid loss") };
+    public void SetLayer(ushort i, Layer l) => _networkLayers![i] = l;
+    public void SetNeuron(ushort layer, ushort neuron, ushort dimensions, string activation, ushort[] parents) => _networkLayers![layer].GetNeurons()[neuron] = new Neuron(layer, neuron, dimensions, activation, parents);
+
+    // Getters
+    
+    public string GetName() => _name!;
+    public ushort GetLayerCount() => (ushort)_layerCount!;
+    public Layer[] GetLayers() => _networkLayers!;
+    public double GetLearningRate() => _learningRate ?? 0.1;
+    public LossFunction GetLossFunction() => _lossFunction ?? throw new NullReferenceException();
+
+    // Indexers
+    
     public Layer this[int layer]
     {
         get => _networkLayers![layer];
         set => _networkLayers![layer] = value;
     }
-    
+
     public Neuron this[int layer, int neuron]
     {
         get => _networkLayers![layer].GetNeurons()[neuron];
@@ -83,12 +84,9 @@ public class NeuralNetwork
 
     public double this[int layer, int neuron, int weightOrBias]
     {
-        get
-        {
-            if (weightOrBias < 0)
-                return _networkLayers![layer].GetNeurons()[neuron].GetBias();
-            return _networkLayers![layer].GetNeurons()[neuron].GetWeights()[weightOrBias];
-        }
+        get => weightOrBias < 0
+            ? _networkLayers![layer].GetNeurons()[neuron].GetBias()
+            : _networkLayers![layer].GetNeurons()[neuron].GetWeights()[weightOrBias];
         set
         {
             if (weightOrBias < 0)
@@ -98,100 +96,83 @@ public class NeuralNetwork
         }
     }
 
-    public void SetLearningRate(double learningRate) => _learningRate = learningRate;
-    public ushort GetLayerCount() => (ushort)_layerCount!;
-    public Layer[] GetLayers() => _networkLayers!;
-    public string GetName() => _name!;
-    public void SetLayer(ushort i, Layer l) => _networkLayers![i] = l;
-    public void SetNeuron(ushort layer, ushort neuron, ushort dimensions, string activation, ushort[] parents) => _networkLayers![layer].GetNeurons()[neuron] = new Neuron(layer, neuron, dimensions, activation, parents);
-    public void SetLoss(string loss)
+    // Network Construction
+    
+    public void CreateInputLayer(ushort numberOfNeurons)
     {
-        switch (loss)
+        _inputLayer = new Layer(0);
+        _inputLayer.Instantiate();
+        _networkLayers![0] = _inputLayer;
+    }
+
+    public void CreateOutputLayer(ushort numberOfNeurons)
+    {
+        _outputLayer = new Layer((ushort)(_layerCount - 1)!);
+        _outputLayer.Instantiate();
+        _networkLayers![(int)(_layerCount - 1)!] = _outputLayer;
+    }
+
+    public void InstantiateHiddenLayers(ushort numberOfNeurons, Neuron.ActivationType activationType)
+    {
+        for (int i = 1; i < _layerCount - 1; i++)
         {
-            case "CrossEntropy":
-                _lossFunction = LossFunction.CrossEntropy;
-                break;
+            Layer hiddenLayer = new Layer((ushort)i);
+            hiddenLayer.Instantiate();
         }
     }
     
-    private enum LossFunction
+    public void CreateLayer(int identifier, ushort numberOfNeurons, Neuron.ActivationType activationType)
     {
-        CrossEntropy,
-        MSE,
+        Layer layer = new Layer((ushort)(_layerCount - 1)!);
+        layer.Instantiate();
+        _networkLayers![(int)(_layerCount - 1)!] = layer;
     }
 
-    public void AddLayer(ushort numberOfNeurons)
-    {
-        _layerCount++;
-        _networkLayers![(int)(_layerCount - 1)!] = new Layer((ushort)(_layerCount - 1)!, numberOfNeurons);
-    }
-
-    public void SetSeed(int seed)
-    {
-        _random = new Random(seed);
-    }
-
-    public void CreateFirstLayer(ushort numberOfNeurons)
-    {
-        _networkLayers = new Layer[1];
-        _networkLayers[0] = new Layer(0, numberOfNeurons);
-        _layerCount = 1;
-    }
-
-    public void AddNeuron(ushort neuron, ushort layer, ushort dimensions, string activation, ushort[] parents)
-    {
-        _networkLayers![layer].IncreaseLayerSize();
-        _networkLayers[layer].SetNeuron(neuron, new Neuron(neuron, layer, dimensions, activation, parents));
-    }
+    // Network Processing
     
     public double[] Process(string filePath)
     {
         string[] data = File.ReadAllLines(filePath);
         double[] results = new double[data.Length];
-    
+
         for (int i = 0; i < data.Length; i++)
         {
-            List<double> outputOfLayer = data[i].Split(",").Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToList();
-            for (int j = 0; j < _layerCount; j++)
-                outputOfLayer = _networkLayers![j].Process(outputOfLayer);
-            results[i] = outputOfLayer[0];
+            List<double> inputs = data[i].Split(',').Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToList();
+            foreach (var layer in _networkLayers!)
+                inputs = layer.Process(inputs);
+            results[i] = inputs[0];
         }
+
         return results;
     }
 
-    private double ProcessSingle(string data)
+    private double ProcessSingle(string input)
     {
-        List<double> outputOfLayer = data.Split(",").Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToList();
-        for (int j = 0; j < _layerCount; j++)
-            outputOfLayer = _networkLayers![j].Process(outputOfLayer);
-        return outputOfLayer[0];
+        List<double> outputs = input.Split(',').Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToList();
+        foreach (var layer in _networkLayers!)
+            outputs = layer.Process(outputs);
+        return outputs[0];
     }
 
-    public void AddNeuron(ushort layer, ushort dimensions, string activation, ushort[] parents)
-    {
-        Neuron[] newNeurons = new Neuron[_networkLayers![layer].GetSize() + 1];
-        Array.Copy(_networkLayers[layer].GetNeurons(), newNeurons, _networkLayers[layer].GetSize());
-        newNeurons[_networkLayers[layer].GetSize()] = new Neuron(_networkLayers[layer].GetSize(), layer, dimensions, activation, parents);
-    }
-
+    // Evaluation
     public double Accuracy(string filePath)
     {
-        string[] data = File.ReadAllLines(filePath);
-        double total = 0;
-        foreach (var line in data)
+        var data = File.ReadAllLines(filePath);
+        double totalError = data.Sum(line =>
         {
-            string[] parts = line.Split(";");
-            string input = parts[0];
-            double target = double.Parse(parts[1], CultureInfo.InvariantCulture);
-            total += Math.Abs(target - ProcessSingle(input));
-        }
-        return (1 - total / data.Length) * 100;
+            var parts = line.Split(';');
+            var input = parts[0];
+            var target = double.Parse(parts[1], CultureInfo.InvariantCulture);
+            return Math.Abs(target - ProcessSingle(input));
+        });
+        return (1 - totalError / data.Length) * 100;
     }
 
     public void AccuracyWithPrint(string filePath)
     {
         string[] data = File.ReadAllLines(filePath);
-        double total = 0;
+        double totalError = 0;
+
         foreach (var line in data)
         {
             string[] parts = line.Split(";");
@@ -199,21 +180,14 @@ public class NeuralNetwork
             double target = double.Parse(parts[1], CultureInfo.InvariantCulture);
             double predicted = ProcessSingle(input);
             Console.WriteLine($"Input: {input} Expected: {target} Predicted: {predicted}");
-            total += Math.Abs(target - predicted);
+            totalError += Math.Abs(target - predicted);
         }
-        Console.WriteLine($"Accuracy: {100 * (1 - total / data.Length)}%");
+
+        Console.WriteLine($"Accuracy: {100 * (1 - totalError / data.Length)}%");
     }
     
-    public override string ToString()
-    {
-        StringBuilder sb = new StringBuilder(); 
-        sb.Append($"{_name};{_lossFunction};{_learningRate?.ToString(CultureInfo.InvariantCulture)};{_seed?.ToString(CultureInfo.InvariantCulture)};{_layerCount}\n");
-        foreach (Layer layer in _networkLayers!)
-            sb.Append(layer);
-        sb.Remove(sb.Length - 1, 1);
-        return sb.ToString();
-    }
-
+    // Optimization
+    
     public void Optimize(string trainingDataPath, ushort totalEpochs)
     {
         // Read all training samples from file
@@ -237,12 +211,15 @@ public class NeuralNetwork
                         layerWeightGradients[neuronIndex] = new double[currentNeuron.GetDimensions()];
                         layerBiasGradients[neuronIndex] = 0;
                     }
+
                     weightGradientsPerLayer.Add(layerWeightGradients);
                     biasGradientsPerLayer.Add(layerBiasGradients);
                 }
+
                 // Parse input features and expected output from sample
                 string[] sampleParts = trainingSample.Split(';');
-                double[] inputFeatures = sampleParts[0].Split(',').Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                double[] inputFeatures = sampleParts[0].Split(',')
+                    .Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToArray();
                 double expectedOutput = double.Parse(sampleParts[1], CultureInfo.InvariantCulture);
                 // Forward pass storage for activation calculations
                 List<List<NeuronActivationRecord>> forwardPassRecords = new List<List<NeuronActivationRecord>>();
@@ -255,7 +232,8 @@ public class NeuralNetwork
                     foreach (Neuron neuron in layer.GetNeurons())
                     {
                         // Retrieve inputs from parent layer
-                        double[] neuronInputs = neuron.GetParents().Select(parentIndex => layerInputs[parentIndex]).ToArray();
+                        double[] neuronInputs = neuron.GetParents().Select(parentIndex => layerInputs[parentIndex])
+                            .ToArray();
                         // Calculate weighted sum (z)
                         double weightedSum = neuron.GetBias();
                         for (int i = 0; i < neuronInputs.Length; i++)
@@ -286,11 +264,11 @@ public class NeuralNetwork
                                 activationDerivative = (weightedSum + 1) / 2;
                                 break;
                             case Neuron.ActivationType.NAND:
-                                activationOutput = - weightedSum * weightedSum / 4 - weightedSum / 2 + 1;
+                                activationOutput = -weightedSum * weightedSum / 4 - weightedSum / 2 + 1;
                                 activationDerivative = -(weightedSum + 1) / 2;
                                 break;
                             case Neuron.ActivationType.OR:
-                                activationOutput = - weightedSum * weightedSum / 4 + weightedSum / 2 + 1;
+                                activationOutput = -weightedSum * weightedSum / 4 + weightedSum / 2 + 1;
                                 activationDerivative = -(weightedSum - 1) / 2;
                                 break;
                             case Neuron.ActivationType.NOR:
@@ -306,6 +284,7 @@ public class NeuralNetwork
                                 activationDerivative = weightedSum;
                                 break;
                         }
+
                         layerOutputs.Add(activationOutput);
                         layerRecords.Add(new NeuronActivationRecord
                         {
@@ -315,9 +294,11 @@ public class NeuralNetwork
                             ActivationDerivative = activationDerivative
                         });
                     }
+
                     forwardPassRecords.Add(layerRecords);
                     layerInputs = layerOutputs;
                 }
+
                 double networkOutput = layerInputs[0];
                 double lossGradient = 0;
                 switch (_lossFunction)
@@ -325,10 +306,11 @@ public class NeuralNetwork
                     case LossFunction.CrossEntropy:
                         switch (_networkLayers[(int)(_layerCount - 1)!].GetNeurons()[0].GetActivation())
                         {
-                            case Neuron.ActivationType.Sigmoid: 
+                            case Neuron.ActivationType.Sigmoid:
                                 lossGradient = networkOutput - expectedOutput;
                                 break;
                         }
+
                         break;
                     case LossFunction.MSE:
                         switch (_networkLayers[(int)(_layerCount - 1)!].GetNeurons()[0].GetActivation())
@@ -337,9 +319,10 @@ public class NeuralNetwork
                                 lossGradient = networkOutput - expectedOutput;
                                 break;
                         }
+
                         break;
                 }
-                
+
                 // Backward propagation through layers
                 double[] nextLayerDeltas = [lossGradient];
                 for (int layerIndex = _networkLayers.Count() - 1; layerIndex >= 0; layerIndex--)
@@ -361,20 +344,28 @@ public class NeuralNetwork
                             Layer downstreamLayer = _networkLayers[layerIndex + 1];
                             // Sum contributions to error from downstream neurons
                             foreach (Neuron downstreamNeuron in downstreamLayer.GetNeurons())
-                                for (int parentIndex = 0; parentIndex < downstreamNeuron.GetParents().Length; parentIndex++)
+                                for (int parentIndex = 0;
+                                     parentIndex < downstreamNeuron.GetParents().Length;
+                                     parentIndex++)
                                     if (downstreamNeuron.GetParents()[parentIndex] == neuronIndex)
-                                        delta += downstreamNeuron.GetWeights()[parentIndex] * nextLayerDeltas[Array.IndexOf(downstreamLayer.GetNeurons(), downstreamNeuron)];
+                                        delta += downstreamNeuron.GetWeights()[parentIndex] *
+                                                 nextLayerDeltas[
+                                                     Array.IndexOf(downstreamLayer.GetNeurons(), downstreamNeuron)];
                             delta *= activationRecord.ActivationDerivative;
                         }
+
                         currentLayerDeltas[neuronIndex] = delta;
                         // Accumulate weight gradients
                         for (int weightIndex = 0; weightIndex < currentNeuron.GetDimensions(); weightIndex++)
-                            weightGradientsPerLayer[layerIndex][neuronIndex][weightIndex] += delta * activationRecord.InputValues[weightIndex];
+                            weightGradientsPerLayer[layerIndex][neuronIndex][weightIndex] +=
+                                delta * activationRecord.InputValues[weightIndex];
                         // Accumulate bias gradient
                         biasGradientsPerLayer[layerIndex][neuronIndex] += delta;
                     }
+
                     nextLayerDeltas = currentLayerDeltas;
                 }
+
                 // Update network parameters using accumulated gradients
                 for (int layerIndex = 0; layerIndex < _networkLayers.Count(); layerIndex++)
                 {
@@ -383,27 +374,11 @@ public class NeuralNetwork
                     {
                         Neuron currentNeuron = currentLayer.GetNeurons()[neuronIndex];
                         // Update bias with learning rate
-                        //Console.Write("Neuron #" + layerIndex + ";" + neuronIndex + " , bias went from " + currentNeuron.GetBias());
-                        currentNeuron.SetBias(currentNeuron.GetBias() - (double)_learningRate! * biasGradientsPerLayer[layerIndex][neuronIndex]);
-                        //Console.WriteLine(" to " + currentNeuron.GetBias());
+                        currentNeuron.SetBias(currentNeuron.GetBias() -
+                                              (double)_learningRate! * biasGradientsPerLayer[layerIndex][neuronIndex]);
                         // Update weights with learning rate
                         for (int weightIndex = 0; weightIndex < currentNeuron.GetDimensions(); weightIndex++)
-                        {
-                            //Console.Write("Neuron #" + layerIndex + ";" + neuronIndex + " , weight #" + weightIndex + " went from " + currentNeuron.GetWeights()[weightIndex]);
                             currentNeuron.GetWeights()[weightIndex] -= (double)_learningRate * weightGradientsPerLayer[layerIndex][neuronIndex][weightIndex];
-                            //Console.WriteLine(" to " + currentNeuron.GetWeights()[weightIndex]);
-                        }
-                        /*if (currentNeuron.GetActivation() == Neuron.ActivationType.AND ||
-                            currentNeuron.GetActivation() == Neuron.ActivationType.NAND ||
-                            currentNeuron.GetActivation() == Neuron.ActivationType.OR ||
-                            currentNeuron.GetActivation() == Neuron.ActivationType.NOR ||
-                            currentNeuron.GetActivation() == Neuron.ActivationType.EX ||
-                            currentNeuron.GetActivation() == Neuron.ActivationType.NEX)
-                        {
-                            currentNeuron.SetBias(0);
-                            currentNeuron.GetWeights()[0] = 1;
-                            currentNeuron.GetWeights()[1] = 1;
-                        }*/
                     }
                 }
             }
@@ -411,25 +386,16 @@ public class NeuralNetwork
         }
     }
 
-
-    private class NeuronActivationRecord
-    {
-        public required double[] InputValues { get; init; } // Inputs received from previous layer
-        public double WeightedSum { get; set; } // z = sum(weights * inputs) + bias
-        public double ActivationOutput { get; set; } // a = activation(z)
-        public double ActivationDerivative { get; init; } // da/dz derivative at z
-    }
-
     public void RandomizeAndOptimize(ushort range, ushort attempts, ushort epochs, string filePath)
     {
         (double[], double)[][] originalSettings = StoreSettings();
-        Randomize((ushort)(range*2));
+        Randomize((ushort)(range * 2));
         (double[], double)[][] bestSettings = StoreSettings();
         double best = Accuracy(filePath);
         for (int attempt = 0; attempt < attempts; attempt++)
         {
-            Randomize((ushort)(range*2));
-            _learningRate = 0.1;
+            Randomize((ushort)(range * 2));
+            SetLearningRate(0.1);
             Optimize(filePath, epochs);
             double cur = Accuracy(filePath);
             if (cur > best)
@@ -439,64 +405,119 @@ public class NeuralNetwork
             }
         }
         ExtractSettings(bestSettings);
-        double curPerf = Accuracy(filePath);
+        double curPerf = Accuracy(filePath); 
         ExtractSettings(originalSettings);
         double originalPerf = Accuracy(filePath);
         if (originalPerf < curPerf)
             ExtractSettings(bestSettings);
     }
 
-    private void Randomize(ushort range)
+    private class NeuronActivationRecord
+    {
+        public required double[] InputValues { get; init; } // Inputs received from previous layer
+        public double WeightedSum { get; set; } // z = sum(weights * inputs) + bias
+        public double ActivationOutput { get; set; } // a = activation(z)
+        public double ActivationDerivative { get; init; } // da/dz derivative at z
+    }
+
+    // Saving & Loading
+    
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append($"{_name};{_lossFunction};{_learningRate?.ToString(CultureInfo.InvariantCulture)};{_layerCount}\n");
+        foreach (Layer layer in _networkLayers!)
+            sb.Append(layer);
+        sb.Remove(sb.Length - 1, 1);
+        return sb.ToString();
+    }
+
+    public void SaveToFile(string filePath) => File.WriteAllText(filePath, ToString());
+
+    private void LoadFromFile(string filePath)
+    {
+        string[] save = File.ReadAllLines(filePath);
+        string[] header = save[0].Split(';');
+        if (header.Length != 4) throw new FormatException("Invalid file header");
+        _name = header[0];
+        _lossFunction = Enum.Parse<LossFunction>(header[1]);
+        _learningRate = double.Parse(header[2], CultureInfo.InvariantCulture);
+        _layerCount = ushort.Parse(header[3]);
+        _networkLayers = new Layer[(int)_layerCount];
+        int linePointer = 1;
+        for (int i = 0; i < _layerCount; i++)
+        {
+            if (linePointer >= save.Length)
+                throw new FormatException($"Missing layer data for layer {i}");
+            ushort neuronsInLayer = ushort.Parse(save[linePointer]);
+            linePointer++;
+            Layer currentLayer = new Layer((ushort)i, neuronsInLayer);
+            for (int k = 0; k < neuronsInLayer; k++)
+            {
+                if (linePointer >= save.Length)
+                    throw new FormatException($"Missing neuron data for layer {i} neuron {k}");
+                string[] neuronData = save[linePointer].Split(';');
+                if (neuronData.Length != 5)
+                    throw new FormatException($"Invalid neuron data at line {linePointer}");
+                ushort dimensions = ushort.Parse(neuronData[0]);
+                double[] weights = neuronData[1].Split(',').Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                double bias = double.Parse(neuronData[2], CultureInfo.InvariantCulture);
+                string activation = neuronData[3];
+                ushort[] parents = neuronData[4].Split(',').Select(ushort.Parse).ToArray();
+                currentLayer.SetNeuron(k, new Neuron((ushort)k, (ushort)i, dimensions, weights, bias, activation, parents));
+                linePointer++;
+            }
+            _networkLayers[i] = currentLayer;
+        }
+    }
+
+    // Randomization / Testing
+
+    public void Randomize(ushort range)
     {
         Random rand = new Random();
-        for (int layer = 0; layer < _networkLayers!.Count(); layer++)
+        foreach (var layer in _networkLayers!)
         {
-            Layer currentLayer = _networkLayers![layer];
-            for (int neuron = 0; neuron < currentLayer.GetSize(); neuron++)
+            foreach (var neuron in layer.GetNeurons())
             {
-                Neuron currentNeuron = currentLayer.GetNeurons()[neuron];
-                double[] weights = currentNeuron.GetWeights();
-                for (int weight = 0; weight < currentNeuron.GetDimensions(); weight++)
-                    weights[weight] = (rand.NextDouble() - 0.5) * range;
-                currentNeuron.SetBias((rand.NextDouble() - 0.5) * range);
+                for (int i = 0; i < neuron.GetDimensions(); i++)
+                    neuron.GetWeights()[i] = (rand.NextDouble() - 0.5) * range;
+                neuron.SetBias((rand.NextDouble() - 0.5) * range);
             }
         }
     }
-    
+
     private (double[], double)[][] StoreSettings()
     {
-        (double[], double)[][] storage = new (double[], double)[_networkLayers!.Count()][];
-        for (int layer = 0; layer < _networkLayers!.Count(); layer++)
-        {
-            Layer currentLayer = _networkLayers![layer];
-            storage[layer] = new (double[], double)[currentLayer.GetSize()]; 
-            for (int neuron = 0; neuron < currentLayer.GetSize(); neuron++)
-            {
-                Neuron currentNeuron = currentLayer.GetNeurons()[neuron];
-                storage[layer][neuron].Item1 = new double[currentNeuron.GetDimensions()];
-                for (int weight = 0; weight < currentNeuron.GetDimensions(); weight++)
-                    storage[layer][neuron].Item1[weight] = currentNeuron.GetWeights()[weight];
-                storage[layer][neuron].Item2 = currentNeuron.GetBias();
-            }
-        }
-        return storage;
+        return _networkLayers!
+            .Select(layer => layer.GetNeurons()
+                .Select(neuron => (
+                    neuron.GetWeights().ToArray(),
+                    neuron.GetBias()
+                )).ToArray())
+            .ToArray();
     }
 
-    private void ExtractSettings((double[], double)[][] storage)
+    private void ExtractSettings((double[], double)[][] settings)
     {
-        for (int layer = 0; layer < _networkLayers!.Count(); layer++)
+        for (int l = 0; l < _networkLayers!.Length; l++)
         {
-            for (int neuron = 0; neuron < _networkLayers![layer].GetSize(); neuron++)
+            for (int n = 0; n < _networkLayers[l].GetSize(); n++)
             {
-                for (int weight = 0; weight < _networkLayers![layer].GetNeurons()[neuron].GetDimensions(); weight++)
-                    _networkLayers![layer].GetNeurons()[neuron].GetWeights()[weight] = storage[layer][neuron].Item1[weight];
-                _networkLayers![layer].GetNeurons()[neuron].SetBias(storage[layer][neuron].Item2);
+                _networkLayers[l].GetNeurons()[n].SetBias(settings[l][n].Item2);
+                for (int w = 0; w < _networkLayers[l].GetNeurons()[n].GetDimensions(); w++)
+                    _networkLayers[l].GetNeurons()[n].GetWeights()[w] = settings[l][n].Item1[w];
             }
         }
     }
 
-    public void SaveToFile(string filePath)
+    // Utilities
+
+    public static double RandomDouble(double minValue, double maxValue)
     {
-        File.WriteAllText(filePath, ToString());
+        lock (Lock)
+        {
+            return _random.NextDouble() * (maxValue - minValue) + minValue;
+        }
     }
 }
