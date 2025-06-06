@@ -7,11 +7,20 @@ public class Layer
     
     private readonly ushort _identifier;
     private ushort? _size;
-    private Neuron[]? _neurons; 
-    
-    public Layer(ushort identifier)
+    private Neuron[]? _neurons;
+    private LayerType _type;
+
+    public enum LayerType
+    {
+        Input,
+        Hidden,
+        Output,
+    }
+        
+    public Layer(ushort identifier, LayerType type)
     {
         _identifier = identifier;
+        _type = type;
     }
 
     public void Instantiate(ushort size, ushort previousLayerSize, Neuron.ActivationType activationType)

@@ -17,7 +17,6 @@ public class NeuralNetwork
     private ushort? _layerCount;
     private Layer[]? _networkLayers;
     private Layer? _inputLayer;
-    private Layer[]? _hiddenLayers;
     private Layer? _outputLayer;
 
     private LossFunction? _lossFunction;
@@ -38,7 +37,7 @@ public class NeuralNetwork
 
     public NeuralNetwork(string filePath)
     {
-        LoadFromFile(filePath);
+        //LoadFromFile(filePath);
     }
 
     //  Instantiation Methods
@@ -58,7 +57,7 @@ public class NeuralNetwork
     public void SetLearningRate(double learningRate) => _learningRate = learningRate;
     public void SetLoss(string loss) => _lossFunction = loss switch { "CrossEntropy" => LossFunction.CrossEntropy, _ => throw new ArgumentException("Invalid loss") };
     public void SetLayer(ushort i, Layer l) => _networkLayers![i] = l;
-    public void SetNeuron(ushort layer, ushort neuron, ushort dimensions, string activation, ushort[] parents) => _networkLayers![layer].GetNeurons()[neuron] = new Neuron(layer, neuron, dimensions, activation, parents);
+    public void SetNeuron(ushort layer, ushort neuron, ushort dimensions, Neuron.ActivationType activation, ushort[] parents, bool hasParents) => _networkLayers![layer].GetNeurons()[neuron] = new Neuron(layer, neuron, dimensions, activation, parents, hasParents);
 
     // Getters
     
@@ -98,33 +97,36 @@ public class NeuralNetwork
 
     // Network Construction
     
-    public void CreateInputLayer(ushort numberOfNeurons)
+    public void CreateInputLayer(ushort numberOfNeurons, Neuron.ActivationType activation)
     {
-        _inputLayer = new Layer(0);
-        _inputLayer.Instantiate();
+        _inputLayer = new Layer(0, Layer.LayerType.Input);
+        _inputLayer.Instantiate(numberOfNeurons, numberOfNeurons, activation);
         _networkLayers![0] = _inputLayer;
     }
 
-    public void CreateOutputLayer(ushort numberOfNeurons)
+    public void CreateOutputLayer(ushort numberOfNeurons, Neuron.ActivationType activation)
     {
-        _outputLayer = new Layer((ushort)(_layerCount - 1)!);
-        _outputLayer.Instantiate();
+        _outputLayer = new Layer((ushort)(_layerCount - 1)!, Layer.LayerType.Output);
+        _outputLayer.Instantiate(numberOfNeurons, _networkLayers![(int)(_layerCount - 1)!].GetSize(), activation);
         _networkLayers![(int)(_layerCount - 1)!] = _outputLayer;
     }
 
-    public void InstantiateHiddenLayers(ushort numberOfNeurons, Neuron.ActivationType activationType)
+    public void CreateHiddenLayers(ushort numberOfNeurons, Neuron.ActivationType activationType)
     {
-        for (int i = 1; i < _layerCount - 1; i++)
+        Layer afterInputLayer = new Layer(1, Layer.LayerType.Hidden);
+        afterInputLayer.Instantiate(numberOfNeurons, _networkLayers![0].GetSize(), activationType);
+        _networkLayers![1] = afterInputLayer;
+        for (int i = 2; i < _layerCount - 1; i++)
         {
-            Layer hiddenLayer = new Layer((ushort)i);
-            hiddenLayer.Instantiate();
+            Layer hiddenLayer = new Layer((ushort)i, Layer.LayerType.Hidden);
+            hiddenLayer.Instantiate(numberOfNeurons, numberOfNeurons, activationType);
         }
     }
     
     public void CreateLayer(int identifier, ushort numberOfNeurons, Neuron.ActivationType activationType)
     {
-        Layer layer = new Layer((ushort)(_layerCount - 1)!);
-        layer.Instantiate();
+        Layer layer = new Layer((ushort)(_layerCount - 1)!, identifier == 0 ? Layer.LayerType.Input : identifier == _layerCount - 1 ? Layer.LayerType.Output : Layer.LayerType.Hidden);
+        layer.Instantiate(numberOfNeurons, _networkLayers![identifier - 1].GetSize(), activationType);
         _networkLayers![(int)(_layerCount - 1)!] = layer;
     }
 
@@ -425,16 +427,17 @@ public class NeuralNetwork
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
-        sb.Append($"{_name};{_lossFunction};{_learningRate?.ToString(CultureInfo.InvariantCulture)};{_layerCount}\n");
+        sb.Append($"{_name};{_type};{_layerCount}\n");
         foreach (Layer layer in _networkLayers!)
             sb.Append(layer);
         sb.Remove(sb.Length - 1, 1);
+        sb.Append($"{_lossFunction};{_learningRate?.ToString(CultureInfo.InvariantCulture)}");
         return sb.ToString();
     }
 
     public void SaveToFile(string filePath) => File.WriteAllText(filePath, ToString());
 
-    private void LoadFromFile(string filePath)
+    /*private void LoadFromFile(string filePath)
     {
         string[] save = File.ReadAllLines(filePath);
         string[] header = save[0].Split(';');
@@ -469,7 +472,7 @@ public class NeuralNetwork
             }
             _networkLayers[i] = currentLayer;
         }
-    }
+    }*/
 
     // Randomization / Testing
 
