@@ -1,8 +1,10 @@
-using System.Globalization;
 
 namespace NeuralNetwork;
 
-public class Neuron
+using System.Globalization;
+using System.Numerics;
+
+public class Node
 {
     
    private readonly ushort _identifier;
@@ -12,72 +14,46 @@ public class Neuron
    private double _bias;
    private ActivationType _activation;
    private ushort[]? _parents;
-   bool _hasParents;
-
-   public bool HasParents() =>  _hasParents;
    
-   
-   //Constructor for a neuron loaded from a save file.
-   public Neuron(ushort identifier, ushort layerIdentifier, ushort dimensions, double[] weights, double bias, string? activation, ushort[] parents, bool hasParents)
+   //Constructor for a node loaded from a save file.
+   public Node(ushort identifier, ushort layerIdentifier, ushort dimensions, double[] weights, double bias, ActivationType activation, ushort[] parents)
    {
        _identifier = identifier;
        _layerIdentifier = layerIdentifier;
        _dimensions = dimensions;
-       switch (activation)
-       {
-           case "RElu":
-               _activation = ActivationType.RElu;
-               break;
-           case "Sigmoid":
-               _activation = ActivationType.Sigmoid;
-               break;
-           case "Tanh":
-               _activation = ActivationType.Tanh;
-               break;
-           case "Linear":
-               _activation = ActivationType.Linear;
-               break;
-           case "AND":
-               _activation = ActivationType.AND;
-               break;
-           case "NAND":
-               _activation = ActivationType.NAND;
-               break;
-           case "OR":
-               _activation = ActivationType.OR;
-               break;
-           case "NOR":
-               _activation = ActivationType.NOR;
-               break;
-           case "EX":
-               _activation = ActivationType.EX;
-               break;
-           case "NEX":
-               _activation = ActivationType.NEX;
-               break;
-           default:
-               throw new ArgumentException($"Invalid activation type '{activation}' for neuron {_layerIdentifier}:{_identifier}");
-       }
+       _activation = activation;
        _weights = weights;
        _bias = bias;
        _parents = parents;
-       _hasParents = hasParents;
    }
    
-   //Newly created neuron constructor.
-   public Neuron(ushort identifier, ushort layerIdentifier, ushort dimensions, ActivationType ac, ushort[]? parents, bool hasParents)
+   //Newly created node constructor.
+   public Node(ushort identifier, ushort layerIdentifier, ushort dimensions, ActivationType ac, ushort[] parents)
    {
        _identifier = identifier;
        _layerIdentifier = layerIdentifier;
        _dimensions = dimensions;
        _weights = new double[dimensions];
-       Random random = new Random();
        for (int i = 0; i < _weights.Length; i++)
-           _weights[i] = random.NextDouble() - 0.5;
-       _bias = random.NextDouble() - 0.5;
+       {
+           switch (_activation)
+           {
+               case ActivationType.RElu:
+                   double std = Math.Sqrt(2.0 / dimensions);
+                   _weights[i] = Network.RandomDouble(-std, std);
+                   break;
+               case ActivationType.Sigmoid:
+                   double range = Math.Sqrt(6.0 / (dimensions + 1));
+                   _weights[i] = Network.RandomDouble(-range, range);
+                   break;
+               default:
+                   _weights[i] = 1;
+                   break;
+           }
+       }
+       _bias = 0;
        _activation = ac;
        _parents = parents;
-       _hasParents = hasParents;
    }
    
    public void SetDimensions(ushort dimensions) => _dimensions = dimensions;
@@ -86,6 +62,7 @@ public class Neuron
    public void SetActivation(ActivationType activation) => _activation = activation;
    public void SetParents(ushort[] parents) => _parents = parents;
    
+   public ushort GetParentCount() => (ushort)(_parents?.Length ?? 0);
    public ushort GetIdentifier() => _identifier;
    public ushort GetLayerIdentifier() => _layerIdentifier;
    public ushort GetDimensions() => _dimensions;
@@ -97,9 +74,11 @@ public class Neuron
    public enum ActivationType
    {
        RElu,
+       LeakyRElu,
        Sigmoid,
        Tanh,
        Linear,
+       Softmax,
        AND,
        NAND,
        OR,
@@ -111,10 +90,7 @@ public class Neuron
    //Base process function.
    public double Process(double[] input)
    {
-       double result = 0;
-       for (int i = 0; i < _dimensions; i++)
-           result += _weights[i] * input[i];
-       result += _bias;
+       double result = WeightedSum(input);
        switch (_activation)
        {
            case ActivationType.Linear:
@@ -123,8 +99,10 @@ public class Neuron
                return Functions.Sigmoid(result);
            case ActivationType.Tanh:
                return Math.Tanh(result);
+           case ActivationType.LeakyRElu:
+               return result > 0 ? result : 0.01 * result;
            case ActivationType.RElu:
-               return Math.Max(0, result);
+               return result > 0 ? result : 0;
            case ActivationType.AND:
                return Functions.And(result);
            case ActivationType.NAND:
@@ -137,13 +115,42 @@ public class Neuron
                return Functions.Ex(result);
            case ActivationType.NEX:
                return Functions.Nex(result);
+           case ActivationType.Softmax:
+               return result;
            default:
                return 0;
        }
    }
 
+   internal double WeightedSum(double[] input)
+   {
+       return DotProduct(input) + _bias;
+   }
+
+   public double DotProduct(double[] inputs)
+   {
+       int vectorSize = Vector<double>.Count;
+       var sumVector = Vector<double>.Zero;
+    
+       for(int i=0; i <= inputs.Length - vectorSize; i += vectorSize)
+       {
+           var inputVector = new Vector<double>(inputs, i);
+           var weightVector = new Vector<double>(_weights, i);
+           sumVector += inputVector * weightVector;
+       }
+    
+       double sum = Vector.Dot(sumVector, Vector<double>.One);
+       
+       for(int i = inputs.Length - (inputs.Length % vectorSize); i < inputs.Length; i++)
+       {
+           sum += inputs[i] * _weights[i];
+       }
+       return sum + _bias;
+   }
+   
    public override string ToString()
    {
-       return $"{_dimensions};" + $"{string.Join(",", _weights.Select(w => w.ToString(CultureInfo.InvariantCulture)))};" + $"{_bias.ToString(CultureInfo.InvariantCulture)};" + $"{_activation};" + $"{string.Join(",", _parents)}\n";
+       return $"{_dimensions};" + $"{string.Join(",", _weights.Select(w => w.ToString(CultureInfo.InvariantCulture)))};" + $"{_bias.ToString(CultureInfo.InvariantCulture)};" + $"{_activation};" + $"{string.Join(",", _parents)}" + "\n";
    }
 }
+
