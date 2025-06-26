@@ -4,17 +4,6 @@ namespace NeuralNetwork;
 
 public static class NetworkUtilities
 {
-    private static Random _random = new Random();
-    private static readonly object Lock = new object();
-    
-    internal static double RandomDouble(double minValue, double maxValue)
-    {
-        lock (Lock)
-        {
-            return _random.NextDouble() * (maxValue - minValue) + minValue;
-        }
-    }
-
     public static void NormalizeData(double[][] data)
     {
         if (data == null || data.Length == 0) return;
@@ -121,5 +110,45 @@ public static class NetworkUtilities
         }
 
         return network;
+    }
+    
+    public static double[][][] InstantiateWeightArray(Network network)
+    {
+        double[][][] arr = new double[network.GetLayerCount()][][];
+        for (int l = 0; l < network.GetLayerCount(); l++)
+        {
+            arr[l] = new double[network[l].GetSize()][];
+            for (int n = 0; n < network[l].GetSize(); n++)
+            {
+                arr[l][n] = new double[network[l, n].GetDimensions()];
+            }
+        }
+        return arr;
+    }
+
+    public static double[][] InstantiateBiasArray(Network network)
+    {
+        double[][] arr = new double[network.GetLayerCount()][];
+        for (int l = 0; l < network.GetLayerCount(); l++)
+            arr[l] = new double[network[l].GetSize()];
+        return arr;
+    }
+    
+    public static Network GenerateNetwork(Network network)
+    {
+        Network newNet = new Network(network.GetName());
+        newNet.InstantiateBasics(network.GetLayerCount() - 2, network.GetLossFunction(), network.GetLearningRate());
+        newNet.CreateInputLayer(network[0].GetSize(), (Node.ActivationType)network[0, 0].GetActivation()!);
+        newNet.CreateHiddenLayers(network[1].GetSize(), (Node.ActivationType)network[1, 0].GetActivation()!);
+        newNet.CreateOutputLayer(network[network.GetLayerCount() - 1].GetSize(), (Node.ActivationType)network[network.GetLayerCount() - 1, 0].GetActivation()!);
+        return newNet;
+    }
+    
+    private static readonly ThreadLocal<Random> _threadRandom = 
+        new ThreadLocal<Random>(() => new Random(BitConverter.ToInt32(Guid.NewGuid().ToByteArray(), 0)));
+    
+    public static double NextDouble(double min, double max)
+    {
+        return min + _threadRandom.Value.NextDouble() * (max - min);
     }
 }

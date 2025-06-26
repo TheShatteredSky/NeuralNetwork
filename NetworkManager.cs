@@ -61,7 +61,7 @@ public class NetworkManager
         network.CreateOutputLayer(_outputSize, _outputType);
         return network;
     }
-
+    
     public Network FindBest(double[][] features, double[][] outputs, uint range, uint epochs, uint attempts)
     {
         ConcurrentBag<(Network network, double score)> generations = new();
@@ -74,7 +74,7 @@ public class NetworkManager
             {
                 Network network = GenerateNetwork();
                 network.Randomize(range);
-                network.Optimize(features, outputs, epochs, false);
+                NetworkTrainer.Optimize(network, features, outputs, epochs);
                 generations.Add((network, network.Loss(features, outputs)));
             });
         }
@@ -94,7 +94,7 @@ public class NetworkManager
             {
                 Network network = GenerateNetwork();
                 network.Randomize(range);
-                network.Optimize(features, outputs, epochs, false);
+                NetworkTrainer.Optimize(network, features, outputs, epochs);
                 generations.Add(network.Loss(features, outputs));
             });
         }

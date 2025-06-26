@@ -190,7 +190,7 @@ public class Network
     
     // Optimization
 
-    public void Optimize(double[][] features, double[][] expectedOutputs, uint totalEpochs, bool countLosses)
+     public void Optimize(double[][] features, double[][] expectedOutputs, uint totalEpochs, bool countLosses)
     {
         if (countLosses) _lossRecords = new List<double>();
         double previousLoss = 1;
@@ -408,7 +408,7 @@ public class Network
         public double ActivationOutput { get; set; } // a = activation(z)
         public double ActivationDerivative { get; init; } // da/dz derivative at z
     }
-
+    
     // Saving & Loading
     
     public override string ToString()
@@ -445,7 +445,7 @@ public class Network
                     }
                 }
                 for (int i = 0; i < node.GetDimensions(); i++)
-                    node.GetWeights()[i] = NetworkUtilities.RandomDouble(-range, range);
+                    node.GetWeights()[i] = NetworkUtilities.NextDouble(-range, range);
                 node.SetBias(0);
             }
         }
@@ -474,4 +474,5 @@ public class Network
             }
         }
     }
+    
 }
