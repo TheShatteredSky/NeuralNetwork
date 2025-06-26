@@ -8,16 +8,12 @@ using System.Text;
 public class Network
 {
     // Fields
-    private static Random _random = new Random();
-    private static readonly object Lock = new object();
 
     private string? _name;
 
     private List<double>? _lossRecords;
     private ushort? _layerCount;
     private Layer[]? _networkLayers;
-    private Layer? _inputLayer;
-    private Layer? _outputLayer;
 
     private LossFunction? _lossFunction;
     private double? _baseLearningRate;
@@ -95,16 +91,16 @@ public class Network
     
     public void CreateInputLayer(ushort numberOfNodes, Node.ActivationType activation)
     {
-        _inputLayer = new Layer(0, Layer.LayerType.Input);
-        _inputLayer.Instantiate(numberOfNodes, 1, activation);
-        _networkLayers![0] = _inputLayer;
+        Layer input = new Layer(0, Layer.LayerType.Input);
+        input.Instantiate(numberOfNodes, 1, activation);
+        _networkLayers![0] = input;
     }
 
     public void CreateOutputLayer(ushort numberOfNodes, Node.ActivationType activation)
     {
-        _outputLayer = new Layer((ushort)(_layerCount - 1)!, Layer.LayerType.Output);
-        _outputLayer.Instantiate(numberOfNodes, _networkLayers![(int)(_layerCount - 2)!].GetSize(), activation);
-        _networkLayers![(int)(_layerCount - 1)!] = _outputLayer;
+        Layer output = new Layer((ushort)(_layerCount - 1)!, Layer.LayerType.Output);
+        output.Instantiate(numberOfNodes, _networkLayers![(int)(_layerCount - 2)!].GetSize(), activation);
+        _networkLayers![(int)(_layerCount - 1)!] = output;
     }
 
     public void CreateHiddenLayers(ushort numberOfNodes, Node.ActivationType activationType)
@@ -212,7 +208,9 @@ public class Network
                     double[][][] weightGradientsPerLayer = InstantiateWeightArray();
                     double[][] biasGradientsPerLayer = InstantiateBiasArray();
                     NodeActivationRecord[][] forwardPassRecords = new NodeActivationRecord[(int)_layerCount!][];
-                    double[] layerInputs = features[sampleIndex];
+                    double[] layerInputs = new double[features[sampleIndex].Length];
+                    for (int i = 0; i < features[sampleIndex].Length; i++)
+                        layerInputs[i] = features[sampleIndex][i];
                     double[] predictions = ForwardPass(ref forwardPassRecords, layerInputs);
                     double[] nextLayerDeltas = OutputLayerGradients(predictions, expectedOutputs, sampleIndex);
                     BackPropagation(nextLayerDeltas, forwardPassRecords, weightGradientsPerLayer, biasGradientsPerLayer);
@@ -402,27 +400,6 @@ public class Network
             }
         }
     }
-  
-
-    private double GetDerivative(Node node, double output)
-    {
-        switch (node.GetActivation())
-        {
-            case Node.ActivationType.Sigmoid:
-                return output * (1 - output);
-            case Node.ActivationType.LeakyRElu:
-                return output > 0 ? 1 : 0.01;
-            case Node.ActivationType.RElu:
-                return output > 0 ? 1 : 0;
-            case Node.ActivationType.Tanh:
-                return 1 - output * output;
-            case Node.ActivationType.Linear:
-                return 1;
-            default:
-                return 1;
-        }
-    }
-    
 
     private class NodeActivationRecord
     {
@@ -442,94 +419,6 @@ public class Network
             sb.Append(layer);
         sb.Append($"{_lossFunction};{_baseLearningRate?.ToString(CultureInfo.InvariantCulture)}");
         return sb.ToString();
-    }
-
-    public void SaveToFile(string filePath) => File.WriteAllText(filePath, ToString());
-
-    private void LoadFromFile(string filePath)
-    {
-        string[] lines = File.ReadAllLines(filePath);
-        if (lines.Length == 0)
-            throw new InvalidDataException("File is empty.");
-
-        // Parse the first line (network metadata)
-        string[] header = lines[0].Split(';');
-        if (header.Length < 3)
-            throw new InvalidDataException("Invalid header format.");
-
-        _name = header[0];
-        _layerCount = ushort.Parse(header[1]);
-        _networkLayers = new Layer[_layerCount.Value];
-
-        int currentLine = 1; // Start reading layers after the header
-
-        // Parse each layer
-        for (int layerIdx = 0; layerIdx < _layerCount; layerIdx++)
-        {
-            if (currentLine >= lines.Length)
-                throw new InvalidDataException("Unexpected end of file while reading layers.");
-
-            string[] layerHeader = lines[currentLine].Split(';');
-            if (layerHeader.Length < 2)
-                throw new InvalidDataException($"Invalid layer header at line {currentLine}.");
-
-            Layer.LayerType layerType = Enum.Parse<Layer.LayerType>(layerHeader[0]);
-            ushort layerSize = ushort.Parse(layerHeader[1]);
-            currentLine++;
-
-            Layer layer = new Layer((ushort)layerIdx, layerType);
-            layer.InstantiateCustom(layerSize);
-            _networkLayers[layerIdx] = layer;
-
-            // Parse nodes in this layer
-            for (int nodeIndex = 0; nodeIndex < layerSize; nodeIndex++)
-            {
-                if (currentLine >= lines.Length)
-                    throw new InvalidDataException("Unexpected end of file while reading nodes.");
-
-                string[] nodeData = lines[currentLine].Split(';');
-                if (nodeData.Length < 5)
-                    throw new InvalidDataException($"Invalid node data at line {currentLine}.");
-
-                ushort dimensions = ushort.Parse(nodeData[0]);
-                double[] weights = nodeData[1].Split(',')
-                    .Select(w => double.Parse(w, CultureInfo.InvariantCulture))
-                    .ToArray();
-                double bias = double.Parse(nodeData[2], CultureInfo.InvariantCulture);
-                Node.ActivationType activation = Enum.Parse<Node.ActivationType>(nodeData[3]);
-                ushort[] parents = nodeData[4].Split(',')
-                    .Select(p => ushort.Parse(p))
-                    .ToArray();
-
-                Node node = new Node(
-                    (ushort)nodeIndex,
-                    (ushort)layerIdx,
-                    dimensions,
-                    weights,
-                    bias,
-                    activation,
-                    parents
-                );
-
-                layer.SetNodes(nodeIndex, node);
-                currentLine++;
-            }
-        }
-
-        // Parse loss function and learning rate (last line)
-        if (currentLine >= lines.Length)
-            throw new InvalidDataException("Missing loss function and learning rate.");
-
-        string[] footer = lines[currentLine].Split(';');
-        if (footer.Length < 2)
-            throw new InvalidDataException("Invalid footer format.");
-
-        _lossFunction = Enum.Parse<LossFunction>(footer[0]);
-        _baseLearningRate = double.Parse(footer[1], CultureInfo.InvariantCulture);
-
-        // Set input/output layers
-        _inputLayer = _networkLayers[0];
-        _outputLayer = _networkLayers[_networkLayers.Length - 1];
     }
 
     // Randomization / Testing
@@ -556,7 +445,7 @@ public class Network
                     }
                 }
                 for (int i = 0; i < node.GetDimensions(); i++)
-                    node.GetWeights()[i] = Network.RandomDouble(-range, range);
+                    node.GetWeights()[i] = NetworkUtilities.RandomDouble(-range, range);
                 node.SetBias(0);
             }
         }
@@ -582,46 +471,6 @@ public class Network
                 _networkLayers[l].GetNodes()[n].SetBias(settings[l][n].Item2);
                 for (int w = 0; w < _networkLayers[l].GetNodes()[n].GetDimensions(); w++)
                     _networkLayers[l].GetNodes()[n].GetWeights()[w] = settings[l][n].Item1[w];
-            }
-        }
-    }
-
-    // Utilities
-
-    public static double RandomDouble(double minValue, double maxValue)
-    {
-        lock (Lock)
-        {
-            return _random.NextDouble() * (maxValue - minValue) + minValue;
-        }
-    }
-
-    public static void NormalizeData(double[][] data)
-    {
-        if (data == null || data.Length == 0) return;
-        int rows = data.Length;
-        int cols = data[0].Length;
-        double[] min = new double[cols];
-        double[] max = new double[cols];
-        for (int j = 0; j < cols; j++)
-        {
-            min[j] = double.MaxValue;
-            max[j] = double.MinValue;
-            for (int i = 0; i < rows; i++)
-            {
-                if (data[i][j] < min[j]) min[j] = data[i][j];
-                if (data[i][j] > max[j]) max[j] = data[i][j];
-            }
-        }
-        for (int i = 0; i < rows; i++)
-        {
-            for (int j = 0; j < cols; j++)
-            {
-                double range = max[j] - min[j];
-                if (range == 0)
-                    data[i][j] = 0;
-                else
-                    data[i][j] = (data[i][j] - min[j]) / range;
             }
         }
     }
