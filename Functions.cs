@@ -10,3 +10,4 @@ public static class Functions
     public static double Ex(double x) => - x * x / 2 + 1;
     public static double Nex(double x) => x * x / 2 - 1;
 }
+//

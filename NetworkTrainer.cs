@@ -199,3 +199,4 @@ public static class NetworkTrainer
         public double ActivationDerivative { get; init; } // da/dz derivative at z
     }
 }
+//
