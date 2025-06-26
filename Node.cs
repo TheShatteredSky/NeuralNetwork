@@ -13,7 +13,7 @@ public class Node
    private double[] _weights;
    private double _bias;
    private ActivationType _activation;
-   private ushort[]? _parents;
+   private ushort[] _parents;
    
    //Constructor for a node loaded from a save file.
    public Node(ushort identifier, ushort layerIdentifier, ushort dimensions, double[] weights, double bias, ActivationType activation, ushort[] parents)
@@ -68,7 +68,7 @@ public class Node
    public ushort GetDimensions() => _dimensions;
    public double[] GetWeights() => _weights;
    public double GetBias() => _bias;
-   public ActivationType? GetActivation() => _activation;
+   public ActivationType GetActivation() => _activation;
    public ushort[] GetParents() => _parents;
    
    public enum ActivationType

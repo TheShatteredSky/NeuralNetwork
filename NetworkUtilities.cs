@@ -151,5 +151,43 @@ public static class NetworkUtilities
     {
         return min + _threadRandom.Value.NextDouble() * (max - min);
     }
+    
+    public static (double[], double)[][] StoreSettings(Network network)
+    {
+        return network.GetLayers()
+            .Select(layer => layer.GetNodes()
+                .Select(node => (
+                    node.GetWeights().ToArray(),
+                    node.GetBias()
+                )).ToArray())
+            .ToArray();
+    }
+
+    public static void ExtractSettings((double[], double)[][] settings, Network network)
+    {
+        for (int l = 0; l < network.GetLayerCount(); l++)
+        {
+            for (int n = 0; n < network[l].GetSize(); n++)
+            {
+                network[l, n].SetBias(settings[l][n].Item2);
+                for (int w = 0; w <network[l, n].GetDimensions(); w++)
+                    network[l,n, w] = settings[l][n].Item1[w];
+            }
+        }
+    }
+    
+    public static (double[][] inputFeatures, double[][] expectedOutputs) GetData(string filePath)
+    {
+        string[] dataString = File.ReadAllLines(filePath);
+        double[][] inputFeatures = new double[dataString.Length][];
+        double[][] expectedOutputs = new double[dataString.Length][];
+        for (int i = 0; i < dataString.Length; i++)
+        {
+            string[] parts = dataString[i].Split(';');
+            inputFeatures[i] = parts[0].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+            expectedOutputs[i] = parts[1].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+        }
+        return (inputFeatures, expectedOutputs);
+    }
 }
 //

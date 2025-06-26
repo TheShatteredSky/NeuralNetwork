@@ -51,6 +51,8 @@ public class Layer
     
     public void SetNodes(int i, Node node) => _nodes![i] = node;
     
+    public LayerType GetLayerType() => _type;
+    
     internal double[] Process(double[] factors)
     {
         double[] resultFactors = new double[_size!.Value];
