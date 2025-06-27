@@ -13,10 +13,12 @@ public static class NetworkUtilities
         double[] max = new double[cols];
         for (int j = 0; j < cols; j++)
         {
+            Console.WriteLine($"J:{j}");
             min[j] = double.MaxValue;
             max[j] = double.MinValue;
             for (int i = 0; i < rows; i++)
             {
+                Console.WriteLine($"I:{i}");
                 if (data[i][j] < min[j]) min[j] = data[i][j];
                 if (data[i][j] > max[j]) max[j] = data[i][j];
             }

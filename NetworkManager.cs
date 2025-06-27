@@ -52,6 +52,21 @@ public class NetworkManager
     {
         return _networks[GetNetworkIndexFromName(name)];
     }
+
+    public bool ContainsNetwork(int index)
+    {
+        return ContainsNetwork(_networks[index]);
+    }
+
+    public bool ContainsNetwork(string name)
+    {
+        return ContainsNetwork(_networks[GetNetworkIndexFromName(name)]);
+    }
+    
+    public bool ContainsNetwork(Network network)
+    {
+        return _networks.Contains(network);
+    }
     
     public int GetDatasetIndexFromName(string name)
     {
@@ -88,51 +103,13 @@ public class NetworkManager
     public Network GenerateNetwork(int i)
     {
         Network original = _networks[i];
-        Network network = new Network(original.GetName());
-        network.InstantiateBasics(original.GetLayerCount() - 2, original.GetLossFunction(), original.GetLearningRate());
-        for (int l = 0; l < original.GetLayerCount(); l++)
-        {
-            Layer layer = new Layer((ushort)l, original[l].GetLayerType());
-            layer.InstantiateCustom(original[l].GetSize());
-            for (int n = 0; n < original[l].GetSize(); n++)
-            {
-                ushort[] parents = new ushort[original[l, n].GetParentCount()];
-                double[] weights = new double[original[l, n].GetDimensions()];
-                for (int p = 0; p < original[l, n].GetParentCount(); p++)
-                    parents[p] = original[l, n].GetParents()[p];
-                for (int w = 0; w < original[l, n].GetDimensions(); w++)
-                    weights[w] = original[l, n].GetWeights()[w];
-                Node node = new Node((ushort)n, (ushort)l, original[l, n].GetDimensions(), weights, original[l, n].GetBias(), original[l, n].GetActivation(), parents);
-                layer[n] = node;
-            }
-            network[l] = layer;
-        }
-        return network;
+        return GenerateNetwork(original);
     }
     
     public Network GenerateNetwork(string name)
     {
         Network original = _networks[GetNetworkIndexFromName(name)];
-        Network network = new Network(original.GetName());
-        network.InstantiateBasics(original.GetLayerCount() - 2, original.GetLossFunction(), original.GetLearningRate());
-        for (int l = 0; l < original.GetLayerCount(); l++)
-        {
-            Layer layer = new Layer((ushort)l, original[l].GetLayerType());
-            layer.InstantiateCustom(original[l].GetSize());
-            for (int n = 0; n < original[l].GetSize(); n++)
-            {
-                ushort[] parents = new ushort[original[l, n].GetParentCount()];
-                double[] weights = new double[original[l, n].GetDimensions()];
-                for (int p = 0; p < original[l, n].GetParentCount(); p++)
-                    parents[p] = original[l, n].GetParents()[p];
-                for (int w = 0; w < original[l, n].GetDimensions(); w++)
-                    weights[w] = original[l, n].GetWeights()[w];
-                Node node = new Node((ushort)n, (ushort)l, original[l, n].GetDimensions(), weights, original[l, n].GetBias(), original[l, n].GetActivation(), parents);
-                layer[n] = node;
-            }
-            network[l] = layer;
-        }
-        return network;
+        return GenerateNetwork(original);
     }
     
     public static Network GenerateNetwork(Network original)
@@ -163,42 +140,14 @@ public class NetworkManager
     {
         Network original = _networks[networkIndex];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[datasetIndex];
-        ConcurrentBag<(Network network, double score)> generations = new();
-        int coreCount = Environment.ProcessorCount;
-        int cuts = (int)attempts / coreCount;
-        generations.Add((original, original.Loss(data.inputs, data.outputs)));
-        for (int i = 0; i < cuts; i++)
-        {
-            Parallel.For(0, coreCount, p =>
-            {
-                Network network = GenerateNetwork(original);
-                network.Randomize(range);
-                NetworkTrainer.Optimize(network, data.inputs, data.outputs, epochs);
-                generations.Add((network, network.Loss(data.inputs, data.outputs)));
-            });
-        }
-        return generations.ToList().OrderBy(x => x.score).First().network;
+        return FindBest(original, (data.inputs, data.outputs), range, epochs, attempts);
     }
 
     public Network FindBest(string networkName, string datasetName, uint range, uint epochs, uint attempts)
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[GetDatasetIndexFromName(datasetName)];
-        ConcurrentBag<(Network network, double score)> generations = new();
-        int coreCount = Environment.ProcessorCount;
-        int cuts = (int)attempts / coreCount;
-        generations.Add((original, original.Loss(data.inputs, data.outputs)));
-        for (int i = 0; i < cuts; i++)
-        {
-            Parallel.For(0, coreCount, p =>
-            {
-                Network network = GenerateNetwork(original);
-                network.Randomize(range);
-                NetworkTrainer.Optimize(network, data.inputs, data.outputs, epochs);
-                generations.Add((network, network.Loss(data.inputs, data.outputs)));
-            });
-        }
-        return generations.ToList().OrderBy(x => x.score).First().network;
+        return FindBest(original, (data.inputs, data.outputs), range, epochs, attempts);
     }
     
     public static Network FindBest(Network original, (double[][] inputs, double[][] outputs) data, uint range, uint epochs, uint attempts)
@@ -224,50 +173,14 @@ public class NetworkManager
     {
         Network original = _networks[networkIndex];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[datasetIndex];
-        ConcurrentBag<double> generations = new();
-        int coreCount = Environment.ProcessorCount;
-        int cuts = (int)attempts / coreCount;
-        generations.Add(original.Loss(data.inputs, data.outputs));
-        for (int i = 0; i < cuts; i++)
-        {
-            Parallel.For(0, coreCount, p =>
-            {
-                Network network = GenerateNetwork(original);
-                network.Randomize(range);
-                NetworkTrainer.Optimize(network, data.inputs, data.outputs, epochs);
-                generations.Add(network.Loss(data.inputs, data.outputs));
-            });
-        }
-
-        //a
-        double[] result = generations.ToArray();
-        Array.Sort(result);
-        return result;
+        return GenerateScores(original, (data.inputs, data.outputs), range, epochs, attempts);
     }
     
     public double[] GenerateScores(string networkName, string datasetName, uint range, uint epochs, uint attempts)
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[GetDatasetIndexFromName(datasetName)];
-        ConcurrentBag<double> generations = new();
-        int coreCount = Environment.ProcessorCount;
-        int cuts = (int)attempts / coreCount;
-        generations.Add(original.Loss(data.inputs, data.outputs));
-        for (int i = 0; i < cuts; i++)
-        {
-            Parallel.For(0, coreCount, p =>
-            {
-                Network network = GenerateNetwork(original);
-                network.Randomize(range);
-                NetworkTrainer.Optimize(network, data.inputs, data.outputs, epochs);
-                generations.Add(network.Loss(data.inputs, data.outputs));
-            });
-        }
-
-        //a
-        double[] result = generations.ToArray();
-        Array.Sort(result);
-        return result;
+        return GenerateScores(original, (data.inputs, data.outputs), range, epochs, attempts);
     }
     
     public static double[] GenerateScores(Network original, (double[][] inputs, double[][] outputs) data, uint range, uint epochs, uint attempts)
