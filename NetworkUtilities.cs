@@ -6,7 +6,7 @@ public static class NetworkUtilities
 {
     public static void NormalizeData(double[][] data)
     {
-        if (data == null || data.Length == 0) return;
+        if (data.Length == 0) return;
         int rows = data.Length;
         int cols = data[0].Length;
         double[] min = new double[cols];
@@ -88,7 +88,7 @@ public static class NetworkUtilities
                 double bias = double.Parse(nodeData[2], CultureInfo.InvariantCulture);
                 Node.ActivationType activation = Enum.Parse<Node.ActivationType>(nodeData[3]);
                 ushort[] parents = nodeData[4].Split(',')
-                    .Select(p => ushort.Parse(p))
+                    .Select(ushort.Parse)
                     .ToArray();
 
                 Node node = new Node(
@@ -135,18 +135,18 @@ public static class NetworkUtilities
     {
         Network newNet = new Network(network.GetName());
         newNet.Instantiate(network.GetLayerCount() - 2);
-        newNet.CreateInputLayer(network[0].GetSize(), (Node.ActivationType)network[0, 0].GetActivation()!);
-        newNet.CreateHiddenLayers(network[1].GetSize(), (Node.ActivationType)network[1, 0].GetActivation()!);
-        newNet.CreateOutputLayer(network[network.GetLayerCount() - 1].GetSize(), (Node.ActivationType)network[network.GetLayerCount() - 1, 0].GetActivation()!);
+        newNet.CreateInputLayer(network[0].GetSize(), network[0, 0].GetActivation());
+        newNet.CreateHiddenLayers(network[1].GetSize(), network[1, 0].GetActivation());
+        newNet.CreateOutputLayer(network[network.GetLayerCount() - 1].GetSize(), network[network.GetLayerCount() - 1, 0].GetActivation());
         return newNet;
     }
     
-    private static readonly ThreadLocal<Random> _threadRandom = 
+    private static readonly ThreadLocal<Random> ThreadRandom = 
         new ThreadLocal<Random>(() => new Random(BitConverter.ToInt32(Guid.NewGuid().ToByteArray(), 0)));
     
     public static double NextDouble(double min, double max)
     {
-        return min + _threadRandom.Value.NextDouble() * (max - min);
+        return min + ThreadRandom.Value.NextDouble() * (max - min);
     }
     
     public static (double[], double)[][] StoreSettings(Network network)
