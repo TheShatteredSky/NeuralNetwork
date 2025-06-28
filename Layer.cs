@@ -7,8 +7,8 @@ public class Layer
 {
     
     private readonly ushort _identifier;
-    private ushort? _size;
-    private Node[]? _nodes;
+    private ushort _size;
+    private Node[] _nodes;
     private LayerType _type;
 
     public enum LayerType
@@ -22,6 +22,8 @@ public class Layer
     {
         _identifier = identifier;
         _type = type;
+        _size = 0;
+        _nodes = [];
     }
     
     internal void InstantiateCustom(ushort size)
@@ -55,7 +57,7 @@ public class Layer
     
     internal double[] Process(double[] factors)
     {
-        double[] resultFactors = new double[_size!.Value];
+        double[] resultFactors = new double[_size];
         bool softmaxLayer = _nodes![0].GetActivation() == Node.ActivationType.Softmax;
         if (softmaxLayer) resultFactors = SoftmaxOutputs(WeightedSums(factors));
         else
@@ -71,7 +73,7 @@ public class Layer
 
     internal double[] WeightedSums(double[] inputs)
     {
-        double[] results = new double[_size!.Value];
+        double[] results = new double[_size];
         for (int n = 0; n < _size; n++)
             results[n] = _nodes![n].WeightedSum(NodeInputs(inputs, n));
         return results;
