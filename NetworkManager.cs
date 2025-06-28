@@ -115,7 +115,7 @@ public class NetworkManager
     public static Network GenerateNetwork(Network original)
     {
         Network network = new Network(original.GetName());
-        network.InstantiateBasics(original.GetLayerCount() - 2, original.GetLossFunction(), original.GetLearningRate());
+        network.Instantiate(original.GetLayerCount() - 2);
         for (int l = 0; l < original.GetLayerCount(); l++)
         {
             Layer layer = new Layer((ushort)l, original[l].GetLayerType());
@@ -136,21 +136,21 @@ public class NetworkManager
         return network;
     }
     
-    public Network FindBest(int networkIndex, int datasetIndex, uint range, uint epochs, uint attempts)
+    public Network FindBest(int networkIndex, int datasetIndex, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts)
     {
         Network original = _networks[networkIndex];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[datasetIndex];
-        return FindBest(original, (data.inputs, data.outputs), range, epochs, attempts);
+        return FindBest(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts);
     }
 
-    public Network FindBest(string networkName, string datasetName, uint range, uint epochs, uint attempts)
+    public Network FindBest(string networkName, string datasetName,  Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts)
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[GetDatasetIndexFromName(datasetName)];
-        return FindBest(original, (data.inputs, data.outputs), range, epochs, attempts);
+        return FindBest(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts);
     }
     
-    public static Network FindBest(Network original, (double[][] inputs, double[][] outputs) data, uint range, uint epochs, uint attempts)
+    public static Network FindBest(Network original, (double[][] inputs, double[][] outputs) data, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts)
     {
         ConcurrentBag<(Network network, double score)> generations = new();
         int coreCount = Environment.ProcessorCount;
@@ -162,28 +162,29 @@ public class NetworkManager
             {
                 Network network = GenerateNetwork(original);
                 network.Randomize(range);
-                NetworkTrainer.Optimize(network, data.inputs, data.outputs, epochs);
+                SGDOptimizer optimizer = NetworkTrainer.CreateSGDOptimizer(network, lossFunction, learningRate);
+                optimizer.Optimize(data.inputs, data.outputs, epochs);
                 generations.Add((network, network.Loss(data.inputs, data.outputs)));
             });
         }
         return generations.ToList().OrderBy(x => x.score).First().network;
     }
     
-    public double[] GenerateScores(int networkIndex, int datasetIndex, uint range, uint epochs, uint attempts)
+    public double[] GenerateScores(int networkIndex, int datasetIndex, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts)
     {
         Network original = _networks[networkIndex];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[datasetIndex];
-        return GenerateScores(original, (data.inputs, data.outputs), range, epochs, attempts);
+        return GenerateScores(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts);
     }
     
-    public double[] GenerateScores(string networkName, string datasetName, uint range, uint epochs, uint attempts)
+    public double[] GenerateScores(string networkName, string datasetName, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts)
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[GetDatasetIndexFromName(datasetName)];
-        return GenerateScores(original, (data.inputs, data.outputs), range, epochs, attempts);
+        return GenerateScores(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts);
     }
     
-    public static double[] GenerateScores(Network original, (double[][] inputs, double[][] outputs) data, uint range, uint epochs, uint attempts)
+    public static double[] GenerateScores(Network original, (double[][] inputs, double[][] outputs) data, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts)
     {
         ConcurrentBag<double> generations = new();
         int coreCount = Environment.ProcessorCount;
@@ -195,7 +196,8 @@ public class NetworkManager
             {
                 Network network = GenerateNetwork(original);
                 network.Randomize(range);
-                NetworkTrainer.Optimize(network, data.inputs, data.outputs, epochs);
+                SGDOptimizer optimizer = NetworkTrainer.CreateSGDOptimizer(network, lossFunction, learningRate);
+                optimizer.Optimize(data.inputs, data.outputs, epochs);
                 generations.Add(network.Loss(data.inputs, data.outputs));
             });
         }

@@ -10,17 +10,10 @@ public class Network
     // Fields
 
     private string? _name;
-
-    private List<double>? _lossRecords;
+    
     private ushort? _layerCount;
     private Layer[]? _networkLayers;
-
-    private LossFunction? _lossFunction;
-    private double? _baseLearningRate;
-
-    //  Enums
     
-    public enum LossFunction { CrossEntropy, MSE }
 
     // Constructors
     
@@ -32,32 +25,24 @@ public class Network
 
     //  Instantiation Methods
 
-    public void InstantiateBasics(int hiddenLayers, LossFunction lossFunction, double? learningRate)
+    public void Instantiate(int hiddenLayers)
     {
         _networkLayers = new Layer[hiddenLayers + 2];
         _layerCount = (ushort)(hiddenLayers + 2);
-        _lossFunction = lossFunction;
-        _baseLearningRate = learningRate ?? 0.1;
-        
     }
     
 
     // Setters
     
-    public void SetLearningRate(double learningRate) => _baseLearningRate = learningRate;
-    public void SetLoss(string loss) => _lossFunction = loss switch { "CrossEntropy" => LossFunction.CrossEntropy, _ => throw new ArgumentException("Invalid loss") };
     public void SetLayer(ushort i, Layer l) => _networkLayers![i] = l;
     public void SetNode(ushort layer, ushort node, ushort dimensions, Node.ActivationType activation, ushort[] parents) => _networkLayers![layer].GetNodes()[node] = new Node(layer, node, dimensions, activation, parents);
     public void SetName(string newName) => _name = newName;
 
     // Getters
     
-    public double[] GetLossRecords() =>  _lossRecords!.ToArray();
     public string GetName() => _name!;
     public ushort GetLayerCount() => (ushort)_layerCount!;
     public Layer[] GetLayers() => _networkLayers!;
-    public double GetLearningRate() => _baseLearningRate ?? 0.1;
-    public LossFunction GetLossFunction() => _lossFunction ?? throw new NullReferenceException();
 
     // Indexers
     
@@ -194,7 +179,6 @@ public class Network
         sb.Append($"{_name};{_layerCount}\n");
         foreach (Layer layer in _networkLayers!)
             sb.Append(layer);
-        sb.Append($"{_lossFunction};{_baseLearningRate?.ToString(CultureInfo.InvariantCulture)}");
         return sb.ToString();
     }
 

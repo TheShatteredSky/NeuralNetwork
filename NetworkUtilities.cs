@@ -13,12 +13,10 @@ public static class NetworkUtilities
         double[] max = new double[cols];
         for (int j = 0; j < cols; j++)
         {
-            Console.WriteLine($"J:{j}");
             min[j] = double.MaxValue;
             max[j] = double.MinValue;
             for (int i = 0; i < rows; i++)
             {
-                Console.WriteLine($"I:{i}");
                 if (data[i][j] < min[j]) min[j] = data[i][j];
                 if (data[i][j] > max[j]) max[j] = data[i][j];
             }
@@ -50,12 +48,9 @@ public static class NetworkUtilities
 
 
         string name = header[0];
-        string[] footer = lines.Last().Split(';');
-        Network.LossFunction lossFunction = Enum.Parse<Network.LossFunction>(footer[0]);
-        double baseLearningRate = double.Parse(footer[1], CultureInfo.InvariantCulture);
         ushort layerCount = ushort.Parse(header[1]);
         Network network = new Network(name);
-        network.InstantiateBasics(layerCount - 2, lossFunction, baseLearningRate);
+        network.Instantiate(layerCount - 2);
         int currentLine = 1; // Start reading layers after the header
 
         // Parse each layer
@@ -139,7 +134,7 @@ public static class NetworkUtilities
     public static Network GenerateNetwork(Network network)
     {
         Network newNet = new Network(network.GetName());
-        newNet.InstantiateBasics(network.GetLayerCount() - 2, network.GetLossFunction(), network.GetLearningRate());
+        newNet.Instantiate(network.GetLayerCount() - 2);
         newNet.CreateInputLayer(network[0].GetSize(), (Node.ActivationType)network[0, 0].GetActivation()!);
         newNet.CreateHiddenLayers(network[1].GetSize(), (Node.ActivationType)network[1, 0].GetActivation()!);
         newNet.CreateOutputLayer(network[network.GetLayerCount() - 1].GetSize(), (Node.ActivationType)network[network.GetLayerCount() - 1, 0].GetActivation()!);
