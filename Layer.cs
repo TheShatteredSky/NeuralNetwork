@@ -40,9 +40,7 @@ public class Layer
         for (int i = 0; i < previousLayerSize; i++)
             parents[i] = (ushort)i;
         for (int i = 0; i < _nodes.Length; i++)
-        {
             _nodes[i] = new Node((ushort)i, _identifier, (ushort)(_identifier == 0 ? 1 : previousLayerSize), activationType, _identifier == 0 ? [(ushort)i] : parents);
-        }
     }
     
     public ushort GetSize() => (ushort)_size!;
@@ -62,11 +60,11 @@ public class Layer
         if (softmaxLayer) resultFactors = SoftmaxOutputs(WeightedSums(factors));
         else
         {
-            for (int i = 0; i < _size; i++)
+            Parallel.For(0, _size, n =>
             {
-                double[] inputs = NodeInputs(factors, i);
-                resultFactors[i] = _nodes[i].Process(inputs);
-            }
+                double[] inputs = NodeInputs(factors, n);
+                resultFactors[n] = _nodes[n].Process(inputs);
+            });
         }
         return resultFactors;
     }
@@ -74,8 +72,10 @@ public class Layer
     internal double[] WeightedSums(double[] inputs)
     {
         double[] results = new double[_size];
-        for (int n = 0; n < _size; n++)
-            results[n] = _nodes![n].WeightedSum(NodeInputs(inputs, n));
+        Parallel.For(0, _size, n =>
+        {
+            results[n] = _nodes![n].WeightedSum(NodeInputs(inputs, n)); 
+        });
         return results;
     }
 
