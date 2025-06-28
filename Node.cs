@@ -145,7 +145,7 @@ public class Node
        {
            sum += inputs[i] * _weights[i];
        }
-       return sum + _bias;
+       return sum;
    }
    
    public override string ToString()
