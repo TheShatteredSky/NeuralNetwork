@@ -1,8 +1,6 @@
 namespace NeuralNetwork;
 
-using System.Globalization;
 using System;
-using System.IO;
 using System.Text;
 
 public class Network
@@ -110,29 +108,15 @@ public class Network
 
     // Network Processing
     
-    public double[][] Process(double[][] features)
-    {
-        List<double[]> results = new List<double[]>();
-        for (int i = 0; i < features.Length; i++)
-        {
-            double[] input = new double[features[i].Length];
-            for (int j = 0; j < features[i].Length; j++)
-                input[j] = features[i][j];
-            foreach (var layer in _networkLayers!)
-                input = layer.Process(input);
-            results.Add(input);
-        }
-        return results.ToArray();
+    public double[][] Process(double[][] features) {
+        return features.Select(ProcessSingle).ToArray();
     }
 
-    private double[] ProcessSingle(double[] features)
-    {
-        double[] input = new double[features.Length];
-        for (int i = 0; i < features.Length; i++)
-            input[i] = features[i];
-        foreach (var layer in _networkLayers!)
-            input = layer.Process(input);
-        return input;
+    private double[] ProcessSingle(double[] features) {
+        double[] current = features;
+        foreach (var layer in _networkLayers!) 
+            current = layer.Process(current);
+        return current;
     }
     
     // Evaluation
