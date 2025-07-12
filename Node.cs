@@ -15,7 +15,6 @@ public class Node
    private ActivationType _activation;
    private ushort[] _parents;
    
-   //Constructor for a node loaded from a save file.
    public Node(ushort identifier, ushort layerIdentifier, ushort dimensions, double[] weights, double bias, ActivationType activation, ushort[] parents)
    {
        _identifier = identifier;
@@ -27,7 +26,6 @@ public class Node
        _parents = parents;
    }
    
-   //Newly created node constructor.
    public Node(ushort identifier, ushort layerIdentifier, ushort dimensions, ActivationType ac, ushort[] parents)
    {
        _identifier = identifier;
@@ -71,6 +69,24 @@ public class Node
    public ActivationType GetActivation() => _activation;
    public ushort[] GetParents() => _parents;
    
+   public Node[] GetDirectParents(Network network)
+   {
+       Layer layer = network[_layerIdentifier - 1]; 
+       Node[] parents = new Node[_parents.Length];
+       for (int i = 0; i < _parents.Length; i++)
+           parents[i] = layer[_parents[i]];
+       return parents;
+   }
+
+   public Node[] GetDirectChildren(Network network)
+   {
+       Layer layer = network[_layerIdentifier + 1]; 
+       List<Node> children = new List<Node>();
+       for (int i = 0; i < layer.GetSize(); i++)
+           if (layer[i].GetParents().Contains(_identifier)) children.Add(layer[i]);
+       return children.ToArray();
+   }
+   
    public enum ActivationType
    {
        RElu,
@@ -87,7 +103,6 @@ public class Node
        NEX
    }
    
-   //Base process function.
    public double Process(double[] input)
    {
        double result = WeightedSum(input);
@@ -116,7 +131,7 @@ public class Node
            case ActivationType.NEX:
                return Functions.Nex(result);
            case ActivationType.Softmax:
-               return result;
+               throw new Exception("Softmax should be handled at the layer level.");
            default:
                return 0;
        }
@@ -153,4 +168,3 @@ public class Node
        return $"{_dimensions};" + $"{string.Join(",", _weights.Select(w => w.ToString(CultureInfo.InvariantCulture)))};" + $"{_bias.ToString(CultureInfo.InvariantCulture)};" + $"{_activation};" + $"{string.Join(",", _parents)}" + "\n";
    }
 }
-//

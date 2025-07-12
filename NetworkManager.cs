@@ -60,7 +60,9 @@ public class NetworkManager
 
     public bool ContainsNetwork(string name)
     {
-        return ContainsNetwork(_networks[GetNetworkIndexFromName(name)]);
+        for (int i = 0; i <  _networks.Count; i++)
+            if (_networks[i].GetName() == name) return true;
+        return false;
     }
     
     public bool ContainsNetwork(Network network)
@@ -206,4 +208,3 @@ public class NetworkManager
         return result;
     }
 }
-//

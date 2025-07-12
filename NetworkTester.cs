@@ -755,3 +755,29 @@ using System.Diagnostics;
         Console.WriteLine("Concurrency test passed");
     }
 }*/
+
+public static class NetworkTester
+{
+    public static void Run()
+    {
+        Network network = NetworkUtilities.LoadFromFile("RiderProjects/NeuralNetworkCLI/NetworkSaves/SAVEFORTESTER");
+        (double[][], double[][]) data = NetworkUtilities.GetData("RiderProjects/NeuralNetworkCLI/DataFiles/DATAFORTESTER");
+        Console.WriteLine(network.Process(data.Item1)[0][0] + " VS " + 0.9335404768183254);
+        SGDOptimizer optimizer = NetworkTrainer.CreateSGDOptimizer(network, Optimizer.LossFunction.CrossEntropy, 0.1);
+        optimizer.Optimize(data.Item1, data.Item2, 1);
+        for (int l = 0; l < network.GetLayerCount(); l++)
+        {
+            Layer layer = network[l];
+            for (int n = 0; n < layer.GetSize(); n++)
+            {
+                StringBuilder sb = new StringBuilder($"Layer {l}, Node {n}: ");
+                Node node = layer[n];
+                for (int w = 0; w < node.GetDimensions(); w++)
+                    sb.Append(node.GetWeights()[w] - 1 + " ");
+                sb.Append(node.GetBias());
+                sb.Append("\n");
+                Console.WriteLine(sb.ToString());
+            }
+        }
+    }
+}

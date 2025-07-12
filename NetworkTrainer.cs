@@ -11,6 +11,4 @@ public static class NetworkTrainer
     {
         optimizer.Optimize(inputs, outputs, epochs);
     }
-    
 }
-//

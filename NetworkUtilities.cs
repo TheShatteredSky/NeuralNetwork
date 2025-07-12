@@ -42,36 +42,25 @@ public static class NetworkUtilities
         string[] lines = File.ReadAllLines(filePath);
         if (lines.Length == 0)
             throw new InvalidDataException("File is empty.");
-
-        // Parse the first line (network metadata)
         string[] header = lines[0].Split(';');
-
-
         string name = header[0];
         ushort layerCount = ushort.Parse(header[1]);
         Network network = new Network(name);
         network.Instantiate(layerCount - 2);
-        int currentLine = 1; // Start reading layers after the header
-
-        // Parse each layer
+        int currentLine = 1;
         for (int layerIdx = 0; layerIdx < layerCount; layerIdx++)
         {
             if (currentLine >= lines.Length)
                 throw new InvalidDataException("Unexpected end of file while reading layers.");
-
             string[] layerHeader = lines[currentLine].Split(';');
             if (layerHeader.Length < 2)
                 throw new InvalidDataException($"Invalid layer header at line {currentLine}.");
-
             Layer.LayerType layerType = Enum.Parse<Layer.LayerType>(layerHeader[0]);
             ushort layerSize = ushort.Parse(layerHeader[1]);
             currentLine++;
-
             Layer layer = new Layer((ushort)layerIdx, layerType);
             layer.InstantiateCustom(layerSize);
             network[layerIdx] = layer;
-
-            // Parse nodes in this layer
             for (int nodeIndex = 0; nodeIndex < layerSize; nodeIndex++)
             {
                 if (currentLine >= lines.Length)
@@ -131,6 +120,21 @@ public static class NetworkUtilities
         return arr;
     }
     
+    public static void ClearWeightArray(double[][][] arr)
+    {
+        for (int l = 0; l < arr.Length; l++)
+        for (int n = 0; n < arr[l].Length; n++)
+            for (int w = 0; w < arr[l][n].Length; w++)
+                arr[l][n][w] = 0;
+    }
+
+    public static void ClearBiasArray(double[][] arr)
+    {
+        for (int l = 0; l < arr.Length; l++)
+            for (int n = 0; n < arr[l].Length; n++)
+                arr[l][n] = 0;
+    }
+    
     public static Network GenerateNetwork(Network network)
     {
         Network newNet = new Network(network.GetName());
@@ -151,13 +155,7 @@ public static class NetworkUtilities
     
     public static (double[], double)[][] StoreSettings(Network network)
     {
-        return network.GetLayers()
-            .Select(layer => layer.GetNodes()
-                .Select(node => (
-                    node.GetWeights().ToArray(),
-                    node.GetBias()
-                )).ToArray())
-            .ToArray();
+        return network.GetLayers().Select(layer => layer.GetNodes().Select(node => (node.GetWeights().ToArray(), node.GetBias())).ToArray()).ToArray();
     }
 
     public static void ExtractSettings((double[], double)[][] settings, Network network)
@@ -187,4 +185,3 @@ public static class NetworkUtilities
         return (inputFeatures, expectedOutputs);
     }
 }
-//

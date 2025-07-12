@@ -5,23 +5,14 @@ using System.Text;
 
 public class Network
 {
-    // Fields
-
     private string? _name;
-    
     private ushort? _layerCount;
     private Layer[]? _networkLayers;
-    
 
-    // Constructors
-    
     public Network(string? name)
     {
         _name = name ?? "NeuralNetwork";
     }
-    
-
-    //  Instantiation Methods
 
     public void Instantiate(int hiddenLayers)
     {
@@ -29,20 +20,13 @@ public class Network
         _layerCount = (ushort)(hiddenLayers + 2);
     }
     
-
-    // Setters
-    
     public void SetLayer(ushort i, Layer l) => _networkLayers![i] = l;
     public void SetNode(ushort layer, ushort node, ushort dimensions, Node.ActivationType activation, ushort[] parents) => _networkLayers![layer].GetNodes()[node] = new Node(layer, node, dimensions, activation, parents);
     public void SetName(string newName) => _name = newName;
-
-    // Getters
     
     public string GetName() => _name!;
     public ushort GetLayerCount() => (ushort)_layerCount!;
     public Layer[] GetLayers() => _networkLayers!;
-
-    // Indexers
     
     public Layer this[int layer]
     {
@@ -69,8 +53,6 @@ public class Network
                 _networkLayers![layer].GetNodes()[node].GetWeights()[weightOrBias] = value;
         }
     }
-
-    // Network Construction
     
     public void CreateInputLayer(ushort numberOfNodes, Node.ActivationType activation)
     {
@@ -105,21 +87,18 @@ public class Network
         layer.Instantiate(numberOfNodes, _networkLayers![identifier - 1].GetSize(), activationType);
         _networkLayers![(int)(_layerCount - 1)!] = layer;
     }
-
-    // Network Processing
     
     public double[][] Process(double[][] features) {
         return features.Select(ProcessSingle).ToArray();
     }
 
-    private double[] ProcessSingle(double[] features) {
+    internal double[] ProcessSingle(double[] features) {
         double[] current = features;
         foreach (var layer in _networkLayers!) 
             current = layer.Process(current);
         return current;
     }
     
-    // Evaluation
     public double Loss(double[][] features, double[][] expectedOutputs)
     {
         double totalError = 0;
@@ -160,13 +139,11 @@ public class Network
     public override string ToString()
     {
        StringBuilder sb = new StringBuilder();
-        sb.Append($"{_name};{_layerCount}\n");
-        foreach (Layer layer in _networkLayers!)
-            sb.Append(layer);
-        return sb.ToString();
+       sb.Append($"{_name};{_layerCount}\n");
+       foreach (Layer layer in _networkLayers!)
+           sb.Append(layer);
+       return sb.ToString();
     }
-
-    // Randomization / Testing
 
     public void Randomize(double range)
     {
@@ -196,4 +173,3 @@ public class Network
         }
     }
 }
-//
