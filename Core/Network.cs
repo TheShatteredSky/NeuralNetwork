@@ -1,7 +1,8 @@
-namespace NeuralNetwork;
+namespace NeuralNetwork.Core;
 
 using System;
 using System.Text;
+using Addons;
 
 public class Network
 {
@@ -151,21 +152,6 @@ public class Network
         {
             foreach (var node in layer.GetNodes())
             {
-                if (range == 0)
-                {
-                    switch (node.GetActivation())
-                    {
-                        case Node.ActivationType.RElu:
-                            range = Math.Sqrt(2.0 / node.GetDimensions());
-                            break;
-                        case Node.ActivationType.Sigmoid:
-                            range = Math.Sqrt(6.0 / (node.GetDimensions() + 1));
-                            break;
-                        default:
-                            range = 1;
-                            break;
-                    }
-                }
                 for (int i = 0; i < node.GetDimensions(); i++)
                     node.GetWeights()[i] = NetworkUtilities.NextDouble(-range, range);
                 node.SetBias(0);

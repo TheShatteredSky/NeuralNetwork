@@ -1,11 +1,9 @@
-
-namespace NeuralNetwork;
+namespace NeuralNetwork.Core;
 
 using System.Text;
 
 public class Layer
 {
-    
     private readonly ushort _identifier;
     private ushort _size;
     private Node[] _nodes;

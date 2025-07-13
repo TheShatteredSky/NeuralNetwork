@@ -1,4 +1,7 @@
-namespace NeuralNetwork;
+namespace NeuralNetwork.Addons;
+
+using Core;
+using Optimizers;
 
 public static class NetworkTrainer
 {

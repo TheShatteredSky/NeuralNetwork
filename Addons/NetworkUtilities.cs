@@ -1,6 +1,7 @@
-using System.Globalization;
+namespace NeuralNetwork.Addons;
 
-namespace NeuralNetwork;
+using System.Globalization;
+using Core;
 
 public static class NetworkUtilities
 {
@@ -145,12 +146,17 @@ public static class NetworkUtilities
         return newNet;
     }
     
-    private static readonly ThreadLocal<Random> ThreadRandom = 
+    private static ThreadLocal<Random> _threadRandom = 
         new ThreadLocal<Random>(() => new Random(BitConverter.ToInt32(Guid.NewGuid().ToByteArray(), 0)));
     
     public static double NextDouble(double min, double max)
     {
-        return min + ThreadRandom.Value.NextDouble() * (max - min);
+        return min + _threadRandom.Value.NextDouble() * (max - min);
+    }
+
+    public static void SetSeed(int seed)
+    {
+        _threadRandom = new  ThreadLocal<Random>(() => new Random(seed));
     }
     
     public static (double[], double)[][] StoreSettings(Network network)

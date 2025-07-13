@@ -1,4 +1,6 @@
-namespace NeuralNetwork;
+using NeuralNetwork.Core;
+
+namespace NeuralNetwork.Optimizers;
 
 public class Optimizer
 {

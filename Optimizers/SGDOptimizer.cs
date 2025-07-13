@@ -1,4 +1,7 @@
-namespace NeuralNetwork;
+namespace NeuralNetwork.Optimizers;
+
+using Core;
+using Addons;
 
 public class SGDOptimizer : Optimizer
 {

@@ -1,8 +1,9 @@
 
-namespace NeuralNetwork;
+namespace NeuralNetwork.Core;
 
 using System.Globalization;
 using System.Numerics;
+using Addons;
 
 public class Node
 {
