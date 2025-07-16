@@ -1,8 +1,5 @@
 namespace NeuralNetwork.Optimizers;
 
-using Core;
-using Addons;
-
 public class SGDOptimizer : Optimizer
 {
     public SGDOptimizer(Network network, LossFunction lossFunction, double baseLearningRate) : base(network, lossFunction, baseLearningRate)
@@ -14,7 +11,6 @@ public class SGDOptimizer : Optimizer
     {
         double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(Network);
         double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(Network);
-        double previousLoss = 1;
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
             int sampleCount = outputs.Length;
@@ -154,15 +150,15 @@ public class SGDOptimizer : Optimizer
                 activationDerivative = 1;
                 break;
             case Node.ActivationType.RElu:
-                activationOutput = ActivationFunction.RElu(weightedSums[n]);
+                activationOutput = ActivationFunction.ReLU(weightedSums[n]);
                 activationDerivative = weightedSums[n] > 0 ? 1 : 0;
                 break;
             case Node.ActivationType.LeakyRElu:
-                activationOutput = ActivationFunction.LeakyRElu(weightedSums[n]);
+                activationOutput = ActivationFunction.LeakyReLU(weightedSums[n]);
                 activationDerivative = weightedSums[n] > 0 ? 1 : 0.01;
                 break;
             case Node.ActivationType.Tanh:
-                activationOutput = ActivationFunction.Tanh(weightedSums[n]);
+                activationOutput = ActivationFunction.TanH(weightedSums[n]);
                 activationDerivative = 1 - activationOutput * activationOutput;
                 break;
             // TODO: Other derivatives
