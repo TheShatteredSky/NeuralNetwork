@@ -79,8 +79,8 @@ public class NetworkManager
 
     public bool ContainsNetwork(string name)
     {
-        for (int i = 0; i <  _networks.Count; i++)
-            if (_networks[i].GetName() == name) return true;
+        foreach (var network in _networks)
+            if (network.GetName() == name) return true;
         return false;
     }
     
@@ -208,7 +208,7 @@ public class NetworkManager
             case Optimizer.OptimizerType.SGD:
                 for (int i = 0; i < cuts; i++)
                 {
-                    Parallel.For(0, coreCount, p =>
+                    Parallel.For(0, coreCount, _ =>
                     {
                         Network network = GenerateNetwork(original);
                         network.Randomize(range);
@@ -249,7 +249,7 @@ public class NetworkManager
             case Optimizer.OptimizerType.SGD:
                 for (int i = 0; i < cuts; i++)
                 {
-                    Parallel.For(0, coreCount, p =>
+                    Parallel.For(0, coreCount, _ =>
                     {
                         Network network = GenerateNetwork(original);
                         network.Randomize(range);
@@ -288,7 +288,7 @@ public class NetworkManager
             case Optimizer.OptimizerType.SGD:
                 for (int i = 0; i < cuts; i++)
                 {
-                    Parallel.For(0, coreCount, p =>
+                    Parallel.For(0, coreCount, _ =>
                     {
                         Network network = GenerateNetwork(original);
                         network.Randomize(range);
