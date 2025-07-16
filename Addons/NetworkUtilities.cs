@@ -1,8 +1,5 @@
 namespace NeuralNetwork.Addons;
 
-using System.Globalization;
-using Core;
-
 public static class NetworkUtilities
 {
     public static void NormalizeData(double[][] data)
@@ -91,8 +88,7 @@ public static class NetworkUtilities
                     activation,
                     parents
                 );
-
-                layer.SetNodes(nodeIndex, node);
+                layer[nodeIndex] = node;
                 currentLine++;
             }
         }

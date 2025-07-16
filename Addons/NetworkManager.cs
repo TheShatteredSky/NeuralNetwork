@@ -1,9 +1,5 @@
 namespace NeuralNetwork.Addons;
 
-using System.Collections.Concurrent;
-using Core;
-using Optimizers;
-
 public class NetworkManager
 {
     private string _name;
