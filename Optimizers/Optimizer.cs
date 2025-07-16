@@ -1,12 +1,11 @@
-using NeuralNetwork.Core;
-
 namespace NeuralNetwork.Optimizers;
 
 public class Optimizer
-{
-    internal LossFunction LossFunct;
+{    
+    
+    internal readonly Network Network;
+    internal readonly LossFunction LossFunct;
     internal double BaseLearningRate;
-    internal Network Network;
 
     public enum OptimizerType
     {
