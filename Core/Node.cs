@@ -112,25 +112,25 @@ public class Node
            case ActivationType.Linear:
                return result;
            case ActivationType.Sigmoid:
-               return Functions.Sigmoid(result);
+               return ActivationFunction.Sigmoid(result);
            case ActivationType.Tanh:
-               return Math.Tanh(result);
+               return ActivationFunction.Tanh(result);
            case ActivationType.LeakyRElu:
-               return result > 0 ? result : 0.01 * result;
+               return ActivationFunction.LeakyRElu(result);
            case ActivationType.RElu:
-               return result > 0 ? result : 0;
+               return ActivationFunction.RElu(result);
            case ActivationType.AND:
-               return Functions.And(result);
+               return ActivationFunction.And(result);
            case ActivationType.NAND:
-               return Functions.Nand(result);
+               return ActivationFunction.Nand(result);
            case ActivationType.OR:
-               return Functions.Or(result);
+               return ActivationFunction.Or(result);
            case ActivationType.NOR:
-               return Functions.Nor(result);
+               return ActivationFunction.Nor(result);
            case ActivationType.EX:
-               return Functions.Ex(result);
+               return ActivationFunction.Ex(result);
            case ActivationType.NEX:
-               return Functions.Nex(result);
+               return ActivationFunction.Nex(result);
            case ActivationType.Softmax:
                throw new Exception("Softmax should be handled at the layer level.");
            default:

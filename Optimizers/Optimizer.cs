@@ -7,10 +7,17 @@ public class Optimizer
     internal LossFunction LossFunct;
     internal double BaseLearningRate;
     internal Network Network;
+
+    public enum OptimizerType
+    {
+        SGD,
+        Adam
+    }
     
     public enum LossFunction
     {
-        CrossEntropy, 
+        BinaryCrossEntropy, 
+        CategoricalCrossEntropy,
         MSE
     }
 

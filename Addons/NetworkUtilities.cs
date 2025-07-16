@@ -46,7 +46,8 @@ public static class NetworkUtilities
         string[] header = lines[0].Split(';');
         string name = header[0];
         ushort layerCount = ushort.Parse(header[1]);
-        Network network = new Network(name);
+        Network network = new Network();
+        network.SetName(name);
         network.Instantiate(layerCount - 2);
         int currentLine = 1;
         for (int layerIdx = 0; layerIdx < layerCount; layerIdx++)
@@ -138,7 +139,8 @@ public static class NetworkUtilities
     
     public static Network GenerateNetwork(Network network)
     {
-        Network newNet = new Network(network.GetName());
+        Network newNet = new Network();
+        newNet.SetName(network.GetName());
         newNet.Instantiate(network.GetLayerCount() - 2);
         newNet.CreateInputLayer(network[0].GetSize(), network[0, 0].GetActivation());
         newNet.CreateHiddenLayers(network[1].GetSize(), network[1, 0].GetActivation());
@@ -177,17 +179,17 @@ public static class NetworkUtilities
         }
     }
     
-    public static (double[][] inputFeatures, double[][] expectedOutputs) GetData(string filePath)
+    public static (double[][] inputs, double[][] outputs) GetData(string filePath)
     {
         string[] dataString = File.ReadAllLines(filePath);
-        double[][] inputFeatures = new double[dataString.Length][];
-        double[][] expectedOutputs = new double[dataString.Length][];
+        double[][] inputs = new double[dataString.Length][];
+        double[][] outputs = new double[dataString.Length][];
         for (int i = 0; i < dataString.Length; i++)
         {
             string[] parts = dataString[i].Split(';');
-            inputFeatures[i] = parts[0].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
-            expectedOutputs[i] = parts[1].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+            inputs[i] = parts[0].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+            outputs[i] = parts[1].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
         }
-        return (inputFeatures, expectedOutputs);
+        return (inputs, outputs);
     }
 }

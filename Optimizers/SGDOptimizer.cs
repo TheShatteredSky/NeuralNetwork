@@ -42,9 +42,6 @@ public class SGDOptimizer : Optimizer
             if (epoch % 100 == 0 && epoch > 0)
             {
                 BaseLearningRate *= 0.9995;
-                double cur = Network.Loss(inputs, outputs);
-                if (Math.Abs(previousLoss - cur) < 1e-6) break;
-                previousLoss = cur;
             }
         }
     }
@@ -97,12 +94,16 @@ public class SGDOptimizer : Optimizer
 
             switch (LossFunct)
             {
-                case LossFunction.CrossEntropy:
-                    if ((node.GetActivation() == Node.ActivationType.Sigmoid && outputLayer.GetSize() == 1)|| node.GetActivation() == Node.ActivationType.Softmax) nextLayerDeltas[i] = output - outputs[sampleIndex][i];
+                case LossFunction.BinaryCrossEntropy:
+                    if (node.GetActivation() == Node.ActivationType.Sigmoid) nextLayerDeltas[i] = output - outputs[sampleIndex][i];
+                    else throw new NotImplementedException();
+                    break;
+                case LossFunction.CategoricalCrossEntropy:
+                    if (node.GetActivation() == Node.ActivationType.Softmax) nextLayerDeltas[i] = output - outputs[sampleIndex][i];
                     else throw new NotImplementedException();
                     break;
                 case LossFunction.MSE:
-                    if (node.GetActivation() == Node.ActivationType.Linear) nextLayerDeltas[i] = output - outputs[sampleIndex][i];
+                    if (node.GetActivation() == Node.ActivationType.Linear) nextLayerDeltas[i] = 2 * (output - outputs[sampleIndex][i]);
                     else throw new NotImplementedException();
                     break;
             }
@@ -145,7 +146,7 @@ public class SGDOptimizer : Optimizer
                 activationDerivative = 1;
                 break;
             case Node.ActivationType.Sigmoid:
-                activationOutput = Functions.Sigmoid(weightedSums[n]);
+                activationOutput = ActivationFunction.Sigmoid(weightedSums[n]);
                 activationDerivative = activationOutput * (1 - activationOutput);
                 break;
             case Node.ActivationType.Linear:
@@ -153,15 +154,15 @@ public class SGDOptimizer : Optimizer
                 activationDerivative = 1;
                 break;
             case Node.ActivationType.RElu:
-                activationOutput = Math.Max(0, weightedSums[n]);
+                activationOutput = ActivationFunction.RElu(weightedSums[n]);
                 activationDerivative = weightedSums[n] > 0 ? 1 : 0;
                 break;
             case Node.ActivationType.LeakyRElu:
-                activationOutput = Math.Max(0, weightedSums[n]);
+                activationOutput = ActivationFunction.LeakyRElu(weightedSums[n]);
                 activationDerivative = weightedSums[n] > 0 ? 1 : 0.01;
                 break;
             case Node.ActivationType.Tanh:
-                activationOutput = Math.Tanh(weightedSums[n]);
+                activationOutput = ActivationFunction.Tanh(weightedSums[n]);
                 activationDerivative = 1 - activationOutput * activationOutput;
                 break;
             // TODO: Other derivatives

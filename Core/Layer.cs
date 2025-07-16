@@ -51,20 +51,20 @@ public class Layer
     
     public LayerType GetLayerType() => _type;
     
-    internal double[] Process(double[] factors)
+    internal double[] Process(double[] inputs)
     {
-        double[] resultFactors = new double[_size];
+        double[] results = new double[_size];
         bool softmaxLayer = _nodes![0].GetActivation() == Node.ActivationType.Softmax;
-        if (softmaxLayer) resultFactors = SoftmaxOutputs(WeightedSums(factors));
+        if (softmaxLayer) results = SoftmaxOutputs(WeightedSums(inputs));
         else
         {
             Parallel.For(0, _size, n =>
             {
-                double[] inputs = NodeInputs(factors, n);
-                resultFactors[n] = _nodes[n].Process(inputs);
+                double[] nodeInputs = NodeInputs(inputs, n);
+                results[n] = _nodes[n].Process(nodeInputs);
             });
         }
-        return resultFactors;
+        return results;
     }
 
     internal double[] WeightedSums(double[] inputs)
