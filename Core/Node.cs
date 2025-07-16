@@ -1,9 +1,4 @@
-
 namespace NeuralNetwork.Core;
-
-using System.Globalization;
-using System.Numerics;
-using Addons;
 
 public class Node
 {
@@ -20,10 +15,12 @@ public class Node
    {
        _identifier = identifier;
        _layerIdentifier = layerIdentifier;
+       if (dimensions != weights.Length) throw new ArgumentException("The number of dimensions does not match the number of weights.");
        _dimensions = dimensions;
        _activation = activation;
        _weights = weights;
        _bias = bias;
+       if (parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the node's dimensions.");
        _parents = parents;
    }
    
@@ -52,22 +49,53 @@ public class Node
        }
        _bias = 0;
        _activation = ac;
+       if (parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the node's dimensions.");
        _parents = parents;
    }
    
-   public void SetDimensions(ushort dimensions) => _dimensions = dimensions;
-   public void SetWeights(double[] weights) => _weights = weights;
-   public void SetBias(double bias) => _bias = bias;
-   public void SetActivation(ActivationType activation) => _activation = activation;
-   public void SetParents(ushort[] parents) => _parents = parents;
+   public void SetDimensions(ushort dimensions)
+   { 
+       _dimensions = dimensions;
+       double[] old = new double[_weights.Length];
+       for (int i = 0; i < _weights.Length; i++)
+           old[i] = _weights[i];
+       _weights = new double[dimensions];
+       for (int i = 0; i < old.Length; i++)
+           _weights[i] = old[i];
+       for (int i = old.Length; i < _weights.Length; i++)
+           _weights[i] = 1;
+   }
    
-   public ushort GetParentCount() => (ushort)(_parents?.Length ?? 0);
+   public void SetWeights(double[] weights)
+   { 
+       if (weights.Length != _dimensions) throw new ArgumentException("The new given weight array is greater in size than the previous, set a new dimension count beforehand.");
+       _weights = weights;
+   } 
+   
+   public void SetBias(double bias) => _bias = bias;
+   
+   public void SetActivation(ActivationType activation) => _activation = activation;
+   
+   public void SetParents(ushort[] parents)
+   {
+       if (_parents.Length > _dimensions) throw new ArgumentException("The given parents are more numerous than the node's dimensions.");
+       _parents = parents;
+   } 
+   
+   public ushort GetParentCount() => (ushort)_parents.Length;
+   
    public ushort GetIdentifier() => _identifier;
+   
    public ushort GetLayerIdentifier() => _layerIdentifier;
+   
    public ushort GetDimensions() => _dimensions;
+   
    public double[] GetWeights() => _weights;
+   
    public double GetBias() => _bias;
+   
    public ActivationType GetActivation() => _activation;
+   
    public ushort[] GetParents() => _parents;
    
    public Node[] GetDirectParents(Network network)
@@ -106,6 +134,7 @@ public class Node
    
    public double Process(double[] input)
    {
+       if (input.Length != _dimensions) throw new ArgumentException("The given input does not match the size expected by the node.");
        double result = WeightedSum(input);
        switch (_activation)
        {
@@ -114,23 +143,23 @@ public class Node
            case ActivationType.Sigmoid:
                return ActivationFunction.Sigmoid(result);
            case ActivationType.Tanh:
-               return ActivationFunction.Tanh(result);
+               return ActivationFunction.TanH(result);
            case ActivationType.LeakyRElu:
-               return ActivationFunction.LeakyRElu(result);
+               return ActivationFunction.LeakyReLU(result);
            case ActivationType.RElu:
-               return ActivationFunction.RElu(result);
+               return ActivationFunction.ReLU(result);
            case ActivationType.AND:
-               return ActivationFunction.And(result);
+               return ActivationFunction.AND(result);
            case ActivationType.NAND:
-               return ActivationFunction.Nand(result);
+               return ActivationFunction.NAND(result);
            case ActivationType.OR:
-               return ActivationFunction.Or(result);
+               return ActivationFunction.OR(result);
            case ActivationType.NOR:
-               return ActivationFunction.Nor(result);
+               return ActivationFunction.NOR(result);
            case ActivationType.EX:
-               return ActivationFunction.Ex(result);
+               return ActivationFunction.EX(result);
            case ActivationType.NEX:
-               return ActivationFunction.Nex(result);
+               return ActivationFunction.NEX(result);
            case ActivationType.Softmax:
                throw new Exception("Softmax should be handled at the layer level.");
            default:
@@ -143,7 +172,7 @@ public class Node
        return DotProduct(input) + _bias;
    }
 
-   public double DotProduct(double[] inputs)
+   private double DotProduct(double[] inputs)
    {
        int vectorSize = Vector<double>.Count;
        var sumVector = Vector<double>.Zero;
