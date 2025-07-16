@@ -36,10 +36,8 @@ public static class NetworkUtilities
 
     public static Network LoadFromFile(string filePath)
     {
-        
         string[] lines = File.ReadAllLines(filePath);
-        if (lines.Length == 0)
-            throw new InvalidDataException("File is empty.");
+        if (lines.Length == 0) throw new InvalidDataException("File is empty.");
         string[] header = lines[0].Split(';');
         string name = header[0];
         ushort layerCount = ushort.Parse(header[1]);
@@ -49,11 +47,9 @@ public static class NetworkUtilities
         int currentLine = 1;
         for (int layerIdx = 0; layerIdx < layerCount; layerIdx++)
         {
-            if (currentLine >= lines.Length)
-                throw new InvalidDataException("Unexpected end of file while reading layers.");
+            if (currentLine >= lines.Length) throw new InvalidDataException("Unexpected end of file while reading layers.");
             string[] layerHeader = lines[currentLine].Split(';');
-            if (layerHeader.Length < 2)
-                throw new InvalidDataException($"Invalid layer header at line {currentLine}.");
+            if (layerHeader.Length < 2) throw new InvalidDataException($"Invalid layer header at line {currentLine}.");
             Layer.LayerType layerType = Enum.Parse<Layer.LayerType>(layerHeader[0]);
             ushort layerSize = ushort.Parse(layerHeader[1]);
             currentLine++;
@@ -64,21 +60,14 @@ public static class NetworkUtilities
             {
                 if (currentLine >= lines.Length)
                     throw new InvalidDataException("Unexpected end of file while reading nodes.");
-
                 string[] nodeData = lines[currentLine].Split(';');
                 if (nodeData.Length < 5)
                     throw new InvalidDataException($"Invalid node data at line {currentLine}.");
-
                 ushort dimensions = ushort.Parse(nodeData[0]);
-                double[] weights = nodeData[1].Split(',')
-                    .Select(w => double.Parse(w, CultureInfo.InvariantCulture))
-                    .ToArray();
+                double[] weights = nodeData[1].Split(',').Select(w => double.Parse(w, CultureInfo.InvariantCulture)).ToArray();
                 double bias = double.Parse(nodeData[2], CultureInfo.InvariantCulture);
                 Node.ActivationType activation = Enum.Parse<Node.ActivationType>(nodeData[3]);
-                ushort[] parents = nodeData[4].Split(',')
-                    .Select(ushort.Parse)
-                    .ToArray();
-
+                ushort[] parents = nodeData[4].Split(',').Select(ushort.Parse).ToArray();
                 Node node = new Node(
                     (ushort)nodeIndex,
                     (ushort)layerIdx,
@@ -92,7 +81,6 @@ public static class NetworkUtilities
                 currentLine++;
             }
         }
-
         return network;
     }
     
