@@ -118,19 +118,19 @@ public static class NetworkUtilities
         return arr;
     }
     
-    public static void ClearWeightArray(double[][][] arr)
+    public static void ClearWeightArray(double[][][] networkWeights)
     {
-        for (int l = 0; l < arr.Length; l++)
-        for (int n = 0; n < arr[l].Length; n++)
-            for (int w = 0; w < arr[l][n].Length; w++)
-                arr[l][n][w] = 0;
+        foreach (var layerWeights in networkWeights)
+            foreach (var nodeWeights in layerWeights)
+                for (int w = 0; w < nodeWeights.Length; w++)
+                    nodeWeights[w] = 0;
     }
 
-    public static void ClearBiasArray(double[][] arr)
+    public static void ClearBiasArray(double[][] networkBiases)
     {
-        for (int l = 0; l < arr.Length; l++)
-            for (int n = 0; n < arr[l].Length; n++)
-                arr[l][n] = 0;
+        foreach (var layerBiases in networkBiases)
+            for (int n = 0; n < layerBiases.Length; n++)
+                layerBiases[n] = 0;
     }
     
     public static Network GenerateNetwork(Network network)
@@ -144,12 +144,12 @@ public static class NetworkUtilities
         return newNet;
     }
     
-    private static ThreadLocal<Random> _threadRandom = 
-        new ThreadLocal<Random>(() => new Random(BitConverter.ToInt32(Guid.NewGuid().ToByteArray(), 0)));
+    private static ThreadLocal<Random> _threadRandom = new (() => new Random(BitConverter.ToInt32(Guid.NewGuid().ToByteArray(), 0)));
     
     public static double NextDouble(double min, double max)
     {
-        return min + _threadRandom.Value.NextDouble() * (max - min);
+        Random random = _threadRandom.Value!;
+        return min + random.NextDouble() * (max - min);
     }
 
     public static void SetSeed(int seed)
