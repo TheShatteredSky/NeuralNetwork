@@ -1,4 +1,4 @@
-namespace NeuralNetwork.Core;
+namespace NeuralNetwork.Addons;
 
 internal static class LossFunction
 {
