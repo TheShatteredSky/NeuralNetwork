@@ -103,9 +103,9 @@ public class Layer
         return sb.ToString();
     }
 
-    public Node this[int index]
+    public Node this[int node]
     {
-        get => _nodes[index];
-        set => _nodes[index] = value;
+        get => _nodes[node];
+        set => _nodes[node] = value;
     }
 }
