@@ -26,7 +26,7 @@ public class Network
         _layerCount = (ushort)(hiddenLayers + 2);
     }
 
-    public void Instantiate(ushort inputSize, Node.ActivationType inputActivation, int hiddenLayers, ushort hiddenSize, Node.ActivationType hiddenActivation, ushort outputSize, Node.ActivationType outputActivation)
+    public void Instantiate(ushort inputSize, ActivationType inputActivation, int hiddenLayers, ushort hiddenSize, ActivationType hiddenActivation, ushort outputSize, ActivationType outputActivation)
     {
         _networkLayers = new Layer[hiddenLayers + 2];
         _layerCount = (ushort)(hiddenLayers + 2);
@@ -68,17 +68,17 @@ public class Network
         }
     }
 
-    public void CreateInputLayer(ushort numberOfNodes, Node.ActivationType activation)
+    public void CreateInputLayer(ushort numberOfNodes, ActivationType activation)
     {
-        if (activation == Node.ActivationType.Softmax) throw new ArgumentException("Input layers cannot have a Softmax activation.");
+        if (activation == ActivationType.Softmax) throw new ArgumentException("Input layers cannot have a Softmax activation.");
         Layer input = new Layer(0, Layer.LayerType.Input);
         input.Instantiate(numberOfNodes, 1, activation);
         _networkLayers[0] = input;
     }
     
-    public void CreateHiddenLayers(ushort numberOfNodes, Node.ActivationType activation)
+    public void CreateHiddenLayers(ushort numberOfNodes, ActivationType activation)
     {
-        if (activation == Node.ActivationType.Softmax) throw new ArgumentException("Hidden layers cannot have a Softmax activation.");
+        if (activation == ActivationType.Softmax) throw new ArgumentException("Hidden layers cannot have a Softmax activation.");
         Layer afterInputLayer = new Layer(1, Layer.LayerType.Hidden);
         afterInputLayer.Instantiate(numberOfNodes, _networkLayers[0].GetSize(), activation);
         _networkLayers[1] = afterInputLayer;
@@ -90,7 +90,7 @@ public class Network
         }
     }
 
-    public void CreateOutputLayer(ushort numberOfNodes, Node.ActivationType activation)
+    public void CreateOutputLayer(ushort numberOfNodes, ActivationType activation)
     {
         Layer output = new Layer((ushort)(_layerCount - 1)!, Layer.LayerType.Output);
         output.Instantiate(numberOfNodes, _networkLayers[_layerCount - 2].GetSize(), activation);
@@ -118,7 +118,7 @@ public class Network
         return current;
     }
 
-    public double Loss(double[][] inputs, double[][] outputs, Optimizer.LossFunction lossFunction)
+    public double Loss(double[][] inputs, double[][] outputs, LossType lossType)
     {
         double totalError = 0;
         for (int i = 0; i < inputs.Length; i++)
@@ -126,30 +126,29 @@ public class Network
             if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException("Number of expected outputs does not match the number of outputs this network generates.");
             double[] predictions = ProcessSingle(inputs[i]);
             double sampleLoss = 0;
-            switch (lossFunction)
+            switch (lossType)
             {
-                case Optimizer.LossFunction.MSE:
+                case LossType.MSE:
                     for (int j = 0; j < outputs[i].Length; j++)
                         sampleLoss += LossFunction.MSE(predictions[j], outputs[i][j]);
                     sampleLoss /= outputs[i].Length;
                     break;
-                case Optimizer.LossFunction.BinaryCrossEntropy:
+                case LossType.BinaryCrossEntropy:
                     for (int j = 0; j < outputs[i].Length; j++)
                         sampleLoss += LossFunction.BinaryCrossEntropy(predictions[j], outputs[i][j]);
                     break;
-                case Optimizer.LossFunction.CategoricalCrossEntropy:
+                case LossType.CategoricalCrossEntropy:
                     for (int j = 0; j < outputs[i].Length; j++)
                         sampleLoss += LossFunction.CategoricalCrossEntropy(predictions[j], outputs[i][j]);
                     break;
             }
-
             totalError += sampleLoss;
         }
 
         return totalError / inputs.Length;
     }
     
-    public string LossString(double[][] inputs, double[][] outputs, Optimizer.LossFunction lossFunction)
+    public string LossString(double[][] inputs, double[][] outputs, LossType lossFunction)
     {
         StringBuilder sb = new StringBuilder();
         double totalError = 0;
@@ -160,19 +159,21 @@ public class Network
             double[] predictions = ProcessSingle(inputs[i]);
             sb.AppendLine($"Input: {string.Join(", ", inputs[i])} Predicted: {string.Join(", ", predictions)} Expected: {string.Join(", ", outputs[i])}");
             for (int j = 0; j < outputs[i].Length; j++)
+            {
                 switch (lossFunction)
                 {
-                    case Optimizer.LossFunction.MSE:
+                    case LossType.MSE:
                         currError += LossFunction.MSE(predictions[j], outputs[i][j]);
                         currError /= outputs[i].Length;
                         break;
-                    case Optimizer.LossFunction.BinaryCrossEntropy:
+                    case LossType.BinaryCrossEntropy:
                         currError += LossFunction.BinaryCrossEntropy(predictions[j], outputs[i][j]);
                         break;
-                    case Optimizer.LossFunction.CategoricalCrossEntropy:
+                    case LossType.CategoricalCrossEntropy:
                         currError += LossFunction.CategoricalCrossEntropy(predictions[j], outputs[i][j]);
                         break;
                 }
+            }
             totalError += currError;
         }
         totalError /= inputs.Length;

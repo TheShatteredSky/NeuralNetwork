@@ -1,16 +1,23 @@
 namespace NeuralNetwork.Optimizers;
 
-public class SGDOptimizer : Optimizer
+public class SGDOptimizer : IOptimizer
 {
-    public SGDOptimizer(Network network, LossFunction lossFunction, double baseLearningRate) : base(network, lossFunction, baseLearningRate)
+    private Network _network;
+    private LossType _lossType;
+    private double _learningRate;
+
+    
+    public SGDOptimizer(Network network, LossType lossFunction, double baseLearningRate)
     {
-        
+        _network = network;
+        _lossType = lossFunction;
+        _learningRate = baseLearningRate;
     }
     
-    public override void Optimize(double[][] inputs, double[][] outputs, uint totalEpochs)
+    public void Optimize(double[][] inputs, double[][] outputs, uint totalEpochs)
     {
-        double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(Network);
-        double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(Network);
+        double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(_network);
+        double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(_network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
             int sampleCount = outputs.Length;
@@ -22,9 +29,9 @@ public class SGDOptimizer : Optimizer
                 NetworkUtilities.ClearBiasArray(biasGradientsForBatch);
                 for (int sampleIndex = batchIndex * batchSize; sampleIndex < sampleCount && sampleIndex < batchIndex * batchSize + batchSize; sampleIndex++)
                 {
-                    double[][][] weightGradientsPerLayer = NetworkUtilities.InstantiateWeightArray(Network);
-                    double[][] biasGradientsPerLayer = NetworkUtilities.InstantiateBiasArray(Network);
-                    NodeActivationRecord[][] forwardPassRecords = new NodeActivationRecord[Network.GetLayerCount()][];
+                    double[][][] weightGradientsPerLayer = NetworkUtilities.InstantiateWeightArray(_network);
+                    double[][] biasGradientsPerLayer = NetworkUtilities.InstantiateBiasArray(_network);
+                    NodeActivationRecord[][] forwardPassRecords = new NodeActivationRecord[_network.GetLayerCount()][];
                     double[] layerInputs = new double[inputs[sampleIndex].Length];
                     for (int i = 0; i < inputs[sampleIndex].Length; i++)
                         layerInputs[i] = inputs[sampleIndex][i];
@@ -37,17 +44,22 @@ public class SGDOptimizer : Optimizer
             }
             if (epoch % 100 == 0 && epoch > 0)
             {
-                BaseLearningRate *= 0.9995;
+                _learningRate *= 0.9995;
             }
         }
+    }
+
+    public double[] OptimizeTracked(double[][] inputs, double[][] outputs, uint totalEpochs)
+    {
+        throw new NotImplementedException();
     }
 
     private void BackPropagation(double[] nextLayerDeltas, NodeActivationRecord[][] forwardPassRecords, double[][][] weightGradientsPerLayer, double[][] biasGradientsPerLayer)
     {
 
-        for (int layerIndex = Network.GetLayerCount() - 1; layerIndex >= 0; layerIndex--)
+        for (int layerIndex = _network.GetLayerCount() - 1; layerIndex >= 0; layerIndex--)
         {
-            Layer currentLayer = Network[layerIndex];
+            Layer currentLayer = _network[layerIndex];
             NodeActivationRecord[] layerActivationRecords = forwardPassRecords[layerIndex];
             double[] currentLayerDeltas = new double[currentLayer.GetSize()];
 
@@ -56,12 +68,12 @@ public class SGDOptimizer : Optimizer
                 Node currentNode = currentLayer.GetNodes()[nodeIndex];
                 NodeActivationRecord activationRecord = layerActivationRecords[nodeIndex];
                 double delta;
-                if (layerIndex == Network.GetLayerCount() - 1)
+                if (layerIndex == _network.GetLayerCount() - 1)
                     delta = nextLayerDeltas[nodeIndex];
                 else
                 {
                     delta = 0;
-                    Layer downstreamLayer = Network[layerIndex + 1];
+                    Layer downstreamLayer = _network[layerIndex + 1];
                     foreach (Node downstreamNode in downstreamLayer.GetNodes())
                         for (int parentIndex = 0; parentIndex < downstreamNode.GetParents().Length; parentIndex++)
                             if (downstreamNode.GetParents()[parentIndex] == nodeIndex)
@@ -82,24 +94,24 @@ public class SGDOptimizer : Optimizer
     private double[] OutputLayerGradients(double[] layerInputs, double[][] outputs, int sampleIndex)
     {
         double[] nextLayerDeltas = new double[layerInputs.Length];
-        Layer outputLayer = Network[Network.GetLayerCount() - 1];
+        Layer outputLayer = _network[_network.GetLayerCount() - 1];
         for (int i = 0; i < outputLayer.GetSize(); i++)
         {
             double output = layerInputs[i];
             Node node = outputLayer.GetNodes()[i];
 
-            switch (LossFunct)
+            switch (_lossType)
             {
-                case LossFunction.BinaryCrossEntropy:
-                    if (node.GetActivation() == Node.ActivationType.Sigmoid) nextLayerDeltas[i] = output - outputs[sampleIndex][i];
+                case LossType.BinaryCrossEntropy:
+                    if (node.GetActivation() == ActivationType.Sigmoid) nextLayerDeltas[i] = output - outputs[sampleIndex][i];
                     else throw new NotImplementedException();
                     break;
-                case LossFunction.CategoricalCrossEntropy:
-                    if (node.GetActivation() == Node.ActivationType.Softmax) nextLayerDeltas[i] = output - outputs[sampleIndex][i];
+                case LossType.CategoricalCrossEntropy:
+                    if (node.GetActivation() == ActivationType.Softmax) nextLayerDeltas[i] = output - outputs[sampleIndex][i];
                     else throw new NotImplementedException();
                     break;
-                case LossFunction.MSE:
-                    if (node.GetActivation() == Node.ActivationType.Linear) nextLayerDeltas[i] = 2 * (output - outputs[sampleIndex][i]);
+                case LossType.MSE:
+                    if (node.GetActivation() == ActivationType.Linear) nextLayerDeltas[i] = 2 * (output - outputs[sampleIndex][i]);
                     else throw new NotImplementedException();
                     break;
             }
@@ -109,14 +121,14 @@ public class SGDOptimizer : Optimizer
 
     private double[] ForwardPass(ref NodeActivationRecord[][] forwardPassRecords, double[] layerInputs)
     {
-        for (int l = 0; l < Network.GetLayerCount(); l++)
+        for (int l = 0; l < _network.GetLayerCount(); l++)
         {
-            Layer layer = Network[l];
+            Layer layer = _network[l];
             Node[] nodes = layer.GetNodes();
             NodeActivationRecord[] layerRecord = new NodeActivationRecord[layer.GetSize()];
             double[] layerOutputs = new double[layer.GetSize()];
             double[] weightedSums = layer.WeightedSums(layerInputs);
-            double[]? softmaxOutputs = layer[0].GetActivation() == Node.ActivationType.Softmax ? layer.SoftmaxOutputs(weightedSums) : null;
+            double[]? softmaxOutputs = layer[0].GetActivation() == ActivationType.Softmax ? layer.SoftmaxOutputs(weightedSums) : null;
             for (int n = 0; n < layer.GetSize(); n++)
             {
                             
@@ -137,27 +149,27 @@ public class SGDOptimizer : Optimizer
         double activationDerivative = 0;
         switch (node.GetActivation())
         {
-            case Node.ActivationType.Softmax:
+            case ActivationType.Softmax:
                 activationOutput = softmaxOutputs![n];
                 activationDerivative = 1;
                 break;
-            case Node.ActivationType.Sigmoid:
+            case ActivationType.Sigmoid:
                 activationOutput = ActivationFunction.Sigmoid(weightedSums[n]);
                 activationDerivative = activationOutput * (1 - activationOutput);
                 break;
-            case Node.ActivationType.Linear:
+            case ActivationType.Linear:
                 activationOutput = weightedSums[n];
                 activationDerivative = 1;
                 break;
-            case Node.ActivationType.RElu:
+            case ActivationType.RElu:
                 activationOutput = ActivationFunction.ReLU(weightedSums[n]);
                 activationDerivative = weightedSums[n] > 0 ? 1 : 0;
                 break;
-            case Node.ActivationType.LeakyRElu:
+            case ActivationType.LeakyRElu:
                 activationOutput = ActivationFunction.LeakyReLU(weightedSums[n]);
                 activationDerivative = weightedSums[n] > 0 ? 1 : 0.01;
                 break;
-            case Node.ActivationType.Tanh:
+            case ActivationType.Tanh:
                 activationOutput = ActivationFunction.TanH(weightedSums[n]);
                 activationDerivative = 1 - activationOutput * activationOutput;
                 break;
@@ -169,9 +181,9 @@ public class SGDOptimizer : Optimizer
 
     private void AccumulateGradients(double[][][] weightAccumulator, double[][] biasAccumulator, double[][][] weights, double[][] biases)
     {
-        for (int l = 0; l < Network.GetLayerCount(); l++)
+        for (int l = 0; l < _network.GetLayerCount(); l++)
         {
-            for (int n = 0; n < Network[l].GetSize(); n++)
+            for (int n = 0; n < _network[l].GetSize(); n++)
             {
                 biasAccumulator[l][n] += biases[l][n];
                 for (int w = 0; w < weights[l][n].Length; w++)
@@ -184,13 +196,13 @@ public class SGDOptimizer : Optimizer
     
    void ApplyGradients(double[][][] totalWeightGradients, double[][] totalBiasGradients, int sampleCount)
     {
-        for (int layerIndex = 0; layerIndex < Network.GetLayerCount(); layerIndex++)
+        for (int layerIndex = 0; layerIndex < _network.GetLayerCount(); layerIndex++)
         {
-            for (int nodeIndex = 0; nodeIndex < Network[layerIndex].GetSize(); nodeIndex++)
+            for (int nodeIndex = 0; nodeIndex < _network[layerIndex].GetSize(); nodeIndex++)
             {
-                Network[layerIndex, nodeIndex, -1] -= BaseLearningRate * totalBiasGradients[layerIndex][nodeIndex] / sampleCount;
-                for (int weightIndex = 0; weightIndex < Network[layerIndex, nodeIndex].GetDimensions(); weightIndex++)
-                    Network[layerIndex, nodeIndex, weightIndex] -= BaseLearningRate * totalWeightGradients[layerIndex][nodeIndex][weightIndex] / sampleCount;
+                _network[layerIndex, nodeIndex, -1] -= _learningRate * totalBiasGradients[layerIndex][nodeIndex] / sampleCount;
+                for (int weightIndex = 0; weightIndex < _network[layerIndex, nodeIndex].GetDimensions(); weightIndex++)
+                    _network[layerIndex, nodeIndex, weightIndex] -= _learningRate * totalWeightGradients[layerIndex][nodeIndex][weightIndex] / sampleCount;
             }
         }
     }

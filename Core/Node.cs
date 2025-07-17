@@ -2,7 +2,6 @@ namespace NeuralNetwork.Core;
 
 public class Node
 {
-    
    private readonly ushort _identifier;
    private readonly ushort _layerIdentifier;
    private ushort _dimensions;
@@ -114,22 +113,6 @@ public class Node
        for (int i = 0; i < layer.GetSize(); i++)
            if (layer[i].GetParents().Contains(_identifier)) children.Add(layer[i]);
        return children.ToArray();
-   }
-   
-   public enum ActivationType
-   {
-       RElu,
-       LeakyRElu,
-       Sigmoid,
-       Tanh,
-       Linear,
-       Softmax,
-       AND,
-       NAND,
-       OR,
-       NOR,
-       EX,
-       NEX
    }
    
    public double Process(double[] input)

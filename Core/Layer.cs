@@ -29,7 +29,7 @@ public class Layer
         _nodes = new Node[size];
     }
     
-    internal void Instantiate(ushort size, ushort previousLayerSize, Node.ActivationType activationType)
+    internal void Instantiate(ushort size, ushort previousLayerSize, ActivationType activationType)
     {
         _size = size;
         _nodes = new Node[size];
@@ -51,7 +51,7 @@ public class Layer
     internal double[] Process(double[] inputs)
     {
         double[] results = new double[_size];
-        bool softmaxLayer = _nodes[0].GetActivation() == Node.ActivationType.Softmax;
+        bool softmaxLayer = _nodes[0].GetActivation() == ActivationType.Softmax;
         if (softmaxLayer) results = SoftmaxOutputs(WeightedSums(inputs));
         else
         {
