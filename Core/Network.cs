@@ -49,23 +49,14 @@ public class Network
 
     public Node this[int layer, int node]
     {
-        get => _networkLayers[layer][node];
-        set => _networkLayers[layer][node] = value;
+        get => this[layer][node];
+        set => this[layer][node] = value;
     }
 
-    //TODO: Make the index for the bias be dimensions + 1 instead of -1, dangerous change, will require testing.
-    public double this[int layer, int node, int weightOrBias]
+    public double this[int layer, int node, int param]
     {
-        get => weightOrBias < 0
-            ? _networkLayers[layer].GetNodes()[node].GetBias()
-            : _networkLayers[layer].GetNodes()[node].GetWeights()[weightOrBias];
-        set
-        {
-            if (weightOrBias < 0)
-                _networkLayers[layer].GetNodes()[node].SetBias(value);
-            else
-                _networkLayers[layer].GetNodes()[node].GetWeights()[weightOrBias] = value;
-        }
+        get => this[layer, node][param];
+        set => this[layer, node][param] = value;
     }
 
     public void CreateInputLayer(ushort numberOfNodes, ActivationType activation)
