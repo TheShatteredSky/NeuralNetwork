@@ -22,4 +22,6 @@ public class AdamOptimizer : IOptimizer
     {
         throw new NotImplementedException();
     }
+    
+    //TODO: Actually implement this shit.
 }
