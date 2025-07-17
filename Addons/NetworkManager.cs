@@ -219,10 +219,7 @@ public class NetworkManager
                 }
                 break;
         }
-
-        var ordered = generations.ToList().OrderBy(x => x.score);
-        var result = ordered.First();
-        return result.network;
+        return generations.ToArray().OrderBy(x => x.score).First().network;
     }
     
     public Network[] GenerateAlternates(int networkIndex, int datasetIndex, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
