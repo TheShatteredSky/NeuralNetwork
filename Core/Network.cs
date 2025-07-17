@@ -98,15 +98,20 @@ public class Network
     }
 
     public double[][] Process(double[][] inputs)
-    {
-       double[][] outputs = new double[inputs.Length][];
-       for (int i = 0; i < inputs.Length; i++)
-           outputs[i] = ProcessSingle(inputs[i]);
-       return outputs;
+    { 
+        double[][] outputs = new double[inputs.Length][];
+        for (int i = 0; i < inputs.Length; i++)
+        {
+            if (inputs[i].Length != this[0].GetSize()) throw new ArgumentException("Number of inputs does not match the size of the input layer.");
+            outputs[i] = ProcessSingle(inputs[i]);
+        }
+
+        return outputs;
     }
 
     internal double[] ProcessSingle(double[] inputs)
     {
+        if (inputs.Length != this[0].GetSize()) throw new ArgumentException("Number of inputs does not match the size of the input layer.");
         double[] current = inputs;
         foreach (var layer in _networkLayers)
             current = layer.Process(current);
@@ -121,7 +126,6 @@ public class Network
             if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException("Number of expected outputs does not match the number of outputs this network generates.");
             double[] predictions = ProcessSingle(inputs[i]);
             double sampleLoss = 0;
-
             switch (lossFunction)
             {
                 case Optimizer.LossFunction.MSE:
