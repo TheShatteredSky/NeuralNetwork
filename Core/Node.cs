@@ -9,6 +9,18 @@ public class Node
    private double _bias;
    private ActivationType _activation;
    private ushort[] _parents;
+
+   public double this[int param]
+   {
+       get => param < _dimensions ? _weights[param] : _bias;
+       set
+       {
+           if (param < _dimensions)
+               _weights[param] = value;
+           else
+               _bias = value;
+       }
+   }
    
    public Node(ushort identifier, ushort layerIdentifier, ushort dimensions, double[] weights, double bias, ActivationType activation, ushort[] parents)
    {
