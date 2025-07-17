@@ -5,7 +5,6 @@ public class SGDOptimizer : IOptimizer
     private Network _network;
     private LossType _lossType;
     private double _learningRate;
-
     
     public SGDOptimizer(Network network, LossType lossFunction, double baseLearningRate)
     {
@@ -20,38 +19,52 @@ public class SGDOptimizer : IOptimizer
         double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(_network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
-            int sampleCount = outputs.Length;
-            int batchSize = 64;
-            int batches = (sampleCount + batchSize - 1) / batchSize;
-            for (int batchIndex = 0; batchIndex < batches; batchIndex++)
-            {
-                NetworkUtilities.ClearWeightArray(weightGradientsForBatch);
-                NetworkUtilities.ClearBiasArray(biasGradientsForBatch);
-                for (int sampleIndex = batchIndex * batchSize; sampleIndex < sampleCount && sampleIndex < batchIndex * batchSize + batchSize; sampleIndex++)
-                {
-                    double[][][] weightGradientsPerLayer = NetworkUtilities.InstantiateWeightArray(_network);
-                    double[][] biasGradientsPerLayer = NetworkUtilities.InstantiateBiasArray(_network);
-                    NodeActivationRecord[][] forwardPassRecords = new NodeActivationRecord[_network.GetLayerCount()][];
-                    double[] layerInputs = new double[inputs[sampleIndex].Length];
-                    for (int i = 0; i < inputs[sampleIndex].Length; i++)
-                        layerInputs[i] = inputs[sampleIndex][i];
-                    double[] predictions = ForwardPass(ref forwardPassRecords, layerInputs);
-                    double[] nextLayerDeltas = OutputLayerGradients(predictions, outputs, sampleIndex);
-                    BackPropagation(nextLayerDeltas, forwardPassRecords, weightGradientsPerLayer, biasGradientsPerLayer);
-                    AccumulateGradients(weightGradientsForBatch, biasGradientsForBatch, weightGradientsPerLayer, biasGradientsPerLayer);
-                }
-                ApplyGradients(weightGradientsForBatch, biasGradientsForBatch, batchSize);
-            }
-            if (epoch % 100 == 0 && epoch > 0)
-            {
-                _learningRate *= 0.9995;
-            }
+            ExecuteEpoch(weightGradientsForBatch, biasGradientsForBatch, inputs, outputs);
+            if (epoch % 100 == 0 && epoch > 0) _learningRate *= 0.9995;
         }
     }
 
     public double[] OptimizeTracked(double[][] inputs, double[][] outputs, uint totalEpochs)
     {
-        throw new NotImplementedException();
+        double[] tracker = new double[totalEpochs/100];
+        double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(_network);
+        double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(_network);
+        for (int epoch = 0; epoch < totalEpochs; epoch++)
+        {
+            ExecuteEpoch(weightGradientsForBatch, biasGradientsForBatch, inputs, outputs);
+            if (epoch % 100 == 0 && epoch > 0)
+            {
+                _learningRate *= 0.9995;
+                tracker[epoch/100] = _network.Loss(inputs, outputs, _lossType);
+            }
+        }
+        return tracker;
+    }
+
+    private void ExecuteEpoch(double[][][] weightGradientsForBatch, double[][] biasGradientsForBatch, double[][] inputs, double[][] outputs)
+    {
+        int sampleCount = outputs.Length;
+        int batchSize = 64;
+        int batches = (sampleCount + batchSize - 1) / batchSize;
+        for (int batchIndex = 0; batchIndex < batches; batchIndex++)
+        {
+            NetworkUtilities.ClearWeightArray(weightGradientsForBatch);
+            NetworkUtilities.ClearBiasArray(biasGradientsForBatch);
+            for (int sampleIndex = batchIndex * batchSize; sampleIndex < sampleCount && sampleIndex < batchIndex * batchSize + batchSize; sampleIndex++)
+            {
+                double[][][] weightGradientsPerLayer = NetworkUtilities.InstantiateWeightArray(_network);
+                double[][] biasGradientsPerLayer = NetworkUtilities.InstantiateBiasArray(_network);
+                NodeActivationRecord[][] forwardPassRecords = new NodeActivationRecord[_network.GetLayerCount()][];
+                double[] layerInputs = new double[inputs[sampleIndex].Length];
+                for (int i = 0; i < inputs[sampleIndex].Length; i++)
+                    layerInputs[i] = inputs[sampleIndex][i];
+                double[] predictions = ForwardPass(forwardPassRecords, layerInputs);
+                double[] nextLayerDeltas = OutputLayerGradients(predictions, outputs, sampleIndex);
+                BackPropagation(nextLayerDeltas, forwardPassRecords, weightGradientsPerLayer, biasGradientsPerLayer);
+                AccumulateGradients(weightGradientsForBatch, biasGradientsForBatch, weightGradientsPerLayer, biasGradientsPerLayer);
+            }
+            ApplyGradients(weightGradientsForBatch, biasGradientsForBatch, batchSize);
+        }
     }
 
     private void BackPropagation(double[] nextLayerDeltas, NodeActivationRecord[][] forwardPassRecords, double[][][] weightGradientsPerLayer, double[][] biasGradientsPerLayer)
@@ -119,7 +132,7 @@ public class SGDOptimizer : IOptimizer
         return nextLayerDeltas;
     }
 
-    private double[] ForwardPass(ref NodeActivationRecord[][] forwardPassRecords, double[] layerInputs)
+    private double[] ForwardPass(NodeActivationRecord[][] forwardPassRecords, double[] layerInputs)
     {
         for (int l = 0; l < _network.GetLayerCount(); l++)
         {
@@ -131,12 +144,10 @@ public class SGDOptimizer : IOptimizer
             double[]? softmaxOutputs = layer[0].GetActivation() == ActivationType.Softmax ? layer.SoftmaxOutputs(weightedSums) : null;
             for (int n = 0; n < layer.GetSize(); n++)
             {
-                            
                 Node node = nodes[n];
                 layerRecord[n] = NodeRecord(node, weightedSums, softmaxOutputs, n, layer, layerInputs);
                 layerOutputs[n] = layerRecord[n].ActivationOutput;
             }
-
             forwardPassRecords[l] = layerRecord;
             layerInputs = layerOutputs;
         }
@@ -173,7 +184,7 @@ public class SGDOptimizer : IOptimizer
                 activationOutput = ActivationFunction.TanH(weightedSums[n]);
                 activationDerivative = 1 - activationOutput * activationOutput;
                 break;
-            // TODO: Other derivatives
+            //TODO: Other derivatives
         }
         return new NodeActivationRecord { InputValues = layer.NodeInputs(inputs, n), WeightedSum = weightedSums[n], ActivationOutput = activationOutput, ActivationDerivative = activationDerivative };
     }
@@ -200,13 +211,14 @@ public class SGDOptimizer : IOptimizer
         {
             for (int nodeIndex = 0; nodeIndex < _network[layerIndex].GetSize(); nodeIndex++)
             {
-                _network[layerIndex, nodeIndex, -1] -= _learningRate * totalBiasGradients[layerIndex][nodeIndex] / sampleCount;
                 for (int weightIndex = 0; weightIndex < _network[layerIndex, nodeIndex].GetDimensions(); weightIndex++)
                     _network[layerIndex, nodeIndex, weightIndex] -= _learningRate * totalWeightGradients[layerIndex][nodeIndex][weightIndex] / sampleCount;
+                _network[layerIndex, nodeIndex, _network[layerIndex, nodeIndex].GetDimensions()] -= _learningRate * totalBiasGradients[layerIndex][nodeIndex] / sampleCount;
             }
         }
     }
     
+   //TODO: WeightedSum property might not be needed? To check.
     private class NodeActivationRecord
     {
         public required double[] InputValues { get; init; } 
