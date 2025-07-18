@@ -31,6 +31,14 @@ public static class NetworkUtilities
             }
         }
     }
+
+    public static void ScaleData(double[][] data, double[] scales)
+    {
+        int columns = scales.Length;
+        for (int column = 0; column < columns; column++)
+            for (int row = 0; row < data.Length; row++)
+                data[row][column] /= scales[column];
+    }
     
     public static void SaveToFile(string filePath, Network network) => File.WriteAllText(filePath, network.ToString());
 
