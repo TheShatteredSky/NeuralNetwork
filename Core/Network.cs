@@ -30,7 +30,7 @@ public class Network
     {
         _networkLayers = new Layer[hiddenLayers + 2];
         _layerCount = (ushort)(hiddenLayers + 2);
-        CreateHiddenLayers(inputSize, inputActivation);
+        CreateInputLayer(inputSize, inputActivation);
         CreateHiddenLayers(hiddenSize, hiddenActivation);
         CreateOutputLayer(outputSize, outputActivation);
     }
