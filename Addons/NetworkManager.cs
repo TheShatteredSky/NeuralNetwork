@@ -222,14 +222,14 @@ public class NetworkManager
             case OptimizerType.Adam:
                 for (int i = 0; i < cuts; i++)
                 {
-                    Parallel.For(0, coreCount, _ =>
+                    for(int p = 0; p < coreCount; p++)
                     {
                         Network network = GenerateNetwork(original);
                         network.Randomize(range);
                         AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add((network, network.Loss(data.inputs, data.outputs, lossFunction)));
-                    });
+                    }
                 }
                 break;
         }

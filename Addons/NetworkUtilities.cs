@@ -32,6 +32,48 @@ public static class NetworkUtilities
         }
     }
 
+    public static (double shift, double scale, double deshift)[] GetInputScales(double[][] data, double tMin, double tMax)
+    {
+        int rows = data.Length;
+        int cols = data[0].Length;
+        (double shift, double scale, double deshift)[] scales = new (double, double, double)[cols];
+        for (int j = 0; j < cols; j++)
+        {
+            double min = double.MaxValue;
+            double max = double.MinValue;
+            for (int i = 0; i < rows; i++)
+            {
+                if (data[i][j] < min) min = data[i][j];
+                if (data[i][j] > max) max = data[i][j];
+            }
+            scales[j].shift = -(min + (max - min) / 2 );
+            scales[j].scale = (tMax - tMin) / (max - min);
+            scales[j].deshift = tMin + (tMax - tMin) / 2;
+        }
+        return scales;
+    }
+
+    public static (double shift, double scale, double descale)[] GetOutputScales(double[][] data, double tMin, double tMax)
+    {
+        int rows = data.Length;
+        int cols = data[0].Length;
+        (double shift, double scale, double deshift)[] scales = new (double, double, double)[cols];
+        for (int j = 0; j < cols; j++)
+        {
+            double min = double.MaxValue;
+            double max = double.MinValue;
+            for (int i = 0; i < rows; i++)
+            {
+                if (data[i][j] < min) min = data[i][j];
+                if (data[i][j] > max) max = data[i][j];
+            }
+            scales[j].shift = -(min + (max - min) / 2 );
+            scales[j].scale = (tMax - tMin) / (max - min);
+            scales[j].deshift = tMin + (tMax - tMin) / 2;
+        }
+        return scales;
+    }
+
     public static void ScaleData(double[][] data, double[] scales)
     {
         int columns = scales.Length;
@@ -89,6 +131,24 @@ public static class NetworkUtilities
                 currentLine++;
             }
         }
+        string[] inScales = lines[currentLine].Split(';'); 
+        string[] outScales = lines[currentLine+1].Split(";");
+        (double shift, double scale, double deshift)[] inputScales = new (double, double, double)[inScales.Length];
+        (double shift, double scale, double deshift)[] outputScales = new (double, double, double)[outScales.Length];
+        for (int i = 0; i < inScales.Length; i++)
+        {
+            string scale = inScales[i];
+            double[] nums = scale.Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+            inputScales[i] = (nums[0], nums[1], nums[2]);
+        }
+        for (int i = 0; i < outScales.Length; i++)
+        {
+            string scale = outScales[i];
+            double[] nums = scale.Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+            outputScales[i] = (nums[0], nums[1], nums[2]);
+        }
+        network.SetInputScaling(inputScales);
+        network.SetOutputScaling(outputScales);
         return network;
     }
     

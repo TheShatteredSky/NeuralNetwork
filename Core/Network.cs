@@ -5,12 +5,16 @@ public class Network
     private string? _name;
     private ushort _layerCount;
     private Layer[] _networkLayers;
+    private (double shift, double scale, double deshift)[] _inputScaling;
+    private (double shift, double scale, double deshift)[] _outputScaling;
 
     public Network()
     {
         _name = null;
         _layerCount = 0;
         _networkLayers = [];
+        _inputScaling = [];
+        _outputScaling = [];
     }
 
     public Network(string name)
@@ -18,6 +22,8 @@ public class Network
         _name = name;
         _layerCount = 0;
         _networkLayers = [];
+        _inputScaling = [];
+        _outputScaling = [];
     }
 
     public void Instantiate(int hiddenLayers)
@@ -36,7 +42,11 @@ public class Network
     }
     
     public void SetName(string newName) => _name = newName;
-
+    
+    public void SetInputScaling((double, double, double)[] scales) => _inputScaling = scales;
+    
+    public void SetOutputScaling((double, double, double)[] scales) => _outputScaling = scales;
+    
     public string GetName() => _name!;
     public ushort GetLayerCount() => _layerCount;
     public Layer[] GetLayers() => _networkLayers;
@@ -61,6 +71,9 @@ public class Network
 
     public void CreateInputLayer(ushort numberOfNodes, ActivationType activation)
     {
+        _inputScaling = new (double shift, double scale, double deshift)[numberOfNodes];
+        for (int i = 0; i < numberOfNodes; i++)
+            _inputScaling[i] = (0, 1, 0);
         if (activation == ActivationType.Softmax) throw new ArgumentException("Input layers cannot have a Softmax activation.");
         Layer input = new Layer(0, Layer.LayerType.Input);
         input.Instantiate(numberOfNodes, 1, activation);
@@ -83,9 +96,48 @@ public class Network
 
     public void CreateOutputLayer(ushort numberOfNodes, ActivationType activation)
     {
+        _outputScaling = new (double shift, double scale, double deshift)[numberOfNodes];
+        for (int i = 0; i < numberOfNodes; i++)
+            _outputScaling[i] = (0, 1, 0);
         Layer output = new Layer((ushort)(_layerCount - 1)!, Layer.LayerType.Output);
         output.Instantiate(numberOfNodes, _networkLayers[_layerCount - 2].GetSize(), activation);
         _networkLayers[_layerCount - 1] = output;
+    }
+
+    public (double[][] scaledInputs, double[][] scaledOutputs) ScaledData(double[][] inputs, double[][] outputs)
+    {
+        (double[][] scaledInputs, double[][] scaledOutputs) scaledData = new();
+        scaledData.scaledInputs = new double[inputs.Length][];
+        scaledData.scaledOutputs = new double[outputs.Length][];
+        for (int i = 0; i < inputs.Length; i++)
+            scaledData.scaledInputs[i] = ScaledInputs(inputs[i]);
+        for (int i = 0; i < outputs.Length; i++)
+            scaledData.scaledOutputs[i] = ScaledOutputs(outputs[i]);
+        return scaledData;
+    }
+
+    public double[] ScaledInputs(double[] inputs)
+    {
+        double[] scaledInputs = new double[inputs.Length];
+            for (int i = 0; i < inputs.Length; i++)
+                scaledInputs[i] = (inputs[i] + _inputScaling[i].shift)  * _inputScaling[i].scale + _inputScaling[i].deshift;
+        return scaledInputs;
+    }
+
+    public double[] ScaledOutputs(double[] outputs)
+    {
+        double[] scaledOutputs = new double[outputs.Length];
+            for (int i = 0; i < outputs.Length; i++)
+                scaledOutputs[i] = (outputs[i] + _outputScaling[i].shift)  * _outputScaling[i].scale + _outputScaling[i].deshift;
+        return scaledOutputs;
+    }
+    
+    public double[] UnscaledOutputs(double[] outputs)
+    {
+        double[] unscaledOutputs = new double[outputs.Length];
+            for (int i = 0; i < outputs.Length; i++)
+                unscaledOutputs[i] = (outputs[i] - _outputScaling[i].deshift) / _outputScaling[i].scale - _outputScaling[i].shift;
+        return unscaledOutputs;
     }
 
     public double[][] Process(double[][] inputs)
@@ -96,14 +148,33 @@ public class Network
             if (inputs[i].Length != this[0].GetSize()) throw new ArgumentException($"Number of inputs does not match the size of the input layer. (Sample #{i})");
             outputs[i] = ProcessSingle(inputs[i]);
         }
-
         return outputs;
     }
 
-    internal double[] ProcessSingle(double[] inputs)
+    private double[] ProcessSingle(double[] inputs)
     {
         if (inputs.Length != this[0].GetSize()) throw new ArgumentException("Number of inputs does not match the size of the input layer.");
-        double[] current = inputs;
+        double[] current = ScaledInputs(inputs);
+        foreach (var layer in _networkLayers)
+            current = layer.Process(current);
+        return UnscaledOutputs(current);
+    }
+
+    internal double[][] ProcessPreScaled(double[][] preScaledInputs)
+    {
+        double[][] outputs = new double[preScaledInputs.Length][];
+        for (int i = 0; i < preScaledInputs.Length; i++)
+        {
+            if (preScaledInputs[i].Length != this[0].GetSize()) throw new ArgumentException($"Number of inputs does not match the size of the input layer. (Sample #{i})");
+            outputs[i] = ProcessSinglePreScaled(preScaledInputs[i]);
+        }
+        return outputs;
+    }
+    
+    private double[] ProcessSinglePreScaled(double[] preScaledInputs)
+    {
+        if (preScaledInputs.Length != this[0].GetSize()) throw new ArgumentException("Number of inputs does not match the size of the input layer.");
+        double[] current = preScaledInputs;
         foreach (var layer in _networkLayers)
             current = layer.Process(current);
         return current;
@@ -116,21 +187,22 @@ public class Network
         {
             if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
             double[] predictions = ProcessSingle(inputs[i]);
+            double[] scaledOutputs = ScaledOutputs(outputs[i]);
             double sampleLoss = 0;
             switch (lossType)
             {
                 case LossType.MSE:
                     for (int j = 0; j < outputs[i].Length; j++)
-                        sampleLoss += LossFunction.MSE(predictions[j], outputs[i][j]);
+                        sampleLoss += LossFunction.MSE(predictions[j], scaledOutputs[j]);
                     sampleLoss /= outputs[i].Length;
                     break;
                 case LossType.BinaryCrossEntropy:
                     for (int j = 0; j < outputs[i].Length; j++)
-                        sampleLoss += LossFunction.BinaryCrossEntropy(predictions[j], outputs[i][j]);
+                        sampleLoss += LossFunction.BinaryCrossEntropy(predictions[j],  scaledOutputs[j]);
                     break;
                 case LossType.CategoricalCrossEntropy:
                     for (int j = 0; j < outputs[i].Length; j++)
-                        sampleLoss += LossFunction.CategoricalCrossEntropy(predictions[j], outputs[i][j]);
+                        sampleLoss += LossFunction.CategoricalCrossEntropy(predictions[j],  scaledOutputs[j]);
                     break;
             }
             totalError += sampleLoss;
@@ -148,24 +220,26 @@ public class Network
             if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
             double currError = 0;
             double[] predictions = ProcessSingle(inputs[i]);
-            sb.AppendLine($"Input: {string.Join(", ", inputs[i])} Predicted: {string.Join(", ", predictions)} Expected: {string.Join(", ", outputs[i])}");
+            double[] scaledOutputs = ScaledOutputs(outputs[i]);
+           
             for (int j = 0; j < outputs[i].Length; j++)
             {
                 switch (lossFunction)
                 {
                     case LossType.MSE:
-                        currError += LossFunction.MSE(predictions[j], outputs[i][j]);
+                        currError += LossFunction.MSE(predictions[j], scaledOutputs[j]);
                         currError /= outputs[i].Length;
                         break;
                     case LossType.BinaryCrossEntropy:
-                        currError += LossFunction.BinaryCrossEntropy(predictions[j], outputs[i][j]);
+                        currError += LossFunction.BinaryCrossEntropy(predictions[j], scaledOutputs[j]);
                         break;
                     case LossType.CategoricalCrossEntropy:
-                        currError += LossFunction.CategoricalCrossEntropy(predictions[j], outputs[i][j]);
+                        currError += LossFunction.CategoricalCrossEntropy(predictions[j], scaledOutputs[j]);
                         break;
                 }
             }
             totalError += currError;
+            sb.AppendLine($"#{i} Input: {string.Join(", ", inputs[i])} Predicted: {string.Join(", ", predictions)} Expected: {string.Join(", ", scaledOutputs)} Loss: {currError} Total: {totalError}");
         }
         totalError /= inputs.Length;
         sb.AppendLine($"Loss: {totalError}");
@@ -180,8 +254,9 @@ public class Network
             if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
             double currentError = 0;
             double[] predictions = ProcessSingle(inputs[i]);
+            double[] scaledOutputs = ScaledOutputs(outputs[i]);
             for (int j = 0; j < outputs[i].Length; j++)
-                currentError += Math.Abs(outputs[i][j] - predictions[j]);
+                currentError += Math.Abs(scaledOutputs[j] - predictions[j]);
             currentError /= outputs[i].Length;
             totalError += currentError;
         }
@@ -198,11 +273,12 @@ public class Network
             if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
             double currError = 0;
             double[] predictions = ProcessSingle(inputs[i]);
-            sb.AppendLine($"Input: {string.Join(", ", inputs[i])} Predicted: {string.Join(", ", predictions)} Expected: {string.Join(", ", outputs[i])}");
+            double[] scaledOutputs = ScaledOutputs(outputs[i]);
             for (int j = 0; j < outputs[i].Length; j++)
-                currError += Math.Abs(outputs[i][j] - predictions[j]);
+                currError += Math.Abs(scaledOutputs[j] - predictions[j]);
             currError /= outputs[i].Length;
             totalError += currError;
+            sb.AppendLine($"#{i} Input: {string.Join(", ", inputs[i])} Predicted: {string.Join(", ", predictions)} Expected: {string.Join(", ", scaledOutputs)} Loss: {currError} Total: {totalError}");
         }
         totalError /= inputs.Length;
         sb.AppendLine($"Loss: {100 * totalError}%");
@@ -215,6 +291,12 @@ public class Network
         sb.Append($"{_name};{_layerCount}\n");
         foreach (Layer layer in _networkLayers)
             sb.Append(layer);
+        sb.AppendLine();
+        for (int i = 0; i < _inputScaling.Length; i++)
+            sb.Append(_inputScaling[i].shift + "," + _inputScaling[i].scale + "," + _inputScaling[i].deshift + ";");
+        sb.AppendLine();
+        for (int i = 0; i < _outputScaling.Length; i++)
+            sb.Append(_outputScaling[i].shift + "," + _outputScaling[i].scale + "," + _outputScaling[i].deshift + ";");
         return sb.ToString();
     }
 
