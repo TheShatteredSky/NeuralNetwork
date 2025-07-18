@@ -59,7 +59,7 @@ public class NetworkManager
     {
         for (int i = 0; i < _networks.Count; i++)
             if (_networks[i].GetName() == name) return i;
-        throw new Exception($"Network {name} not found");
+        throw new Exception($"Network {name} not found.");
     }
     
     public Network GetNetwork(int index)
@@ -93,7 +93,7 @@ public class NetworkManager
     {
         for (int i = 0; i < _datasets.Count; i++)
             if (_datasets[i].name == name) return i;
-        throw new Exception($"Dataset {name} not found");
+        throw new Exception($"Dataset {name} not found.");
     }
 
     public void AddDataset((double[][] inputs, double[][] outputs) data, string name)
