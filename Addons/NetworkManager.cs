@@ -197,6 +197,7 @@ public class NetworkManager
         return FindBest(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
     
+    //TODO: Make this store the setting arrays of the networks instead of the networks themselves to save memory.
     public static Network FindBest(Network original, (double[][] inputs, double[][] outputs) data, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         ConcurrentBag<(Network network, double score)> generations = new();
@@ -213,6 +214,19 @@ public class NetworkManager
                         Network network = GenerateNetwork(original);
                         network.Randomize(range);
                         SGDOptimizer optimizer = new SGDOptimizer(network, lossFunction, learningRate);
+                        optimizer.Optimize(data.inputs, data.outputs, epochs);
+                        generations.Add((network, network.Loss(data.inputs, data.outputs, lossFunction)));
+                    });
+                }
+                break;
+            case OptimizerType.Adam:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, _ =>
+                    {
+                        Network network = GenerateNetwork(original);
+                        network.Randomize(range);
+                        AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add((network, network.Loss(data.inputs, data.outputs, lossFunction)));
                     });
@@ -259,6 +273,19 @@ public class NetworkManager
                     });
                 }
                 break;
+            case OptimizerType.Adam:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, _ =>
+                    {
+                        Network network = GenerateNetwork(original);
+                        network.Randomize(range);
+                        AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
+                        optimizer.Optimize(data.inputs, data.outputs, epochs);
+                        generations.Add(network);
+                    });
+                }
+                break;
         }
         return generations.ToArray();
     }
@@ -293,6 +320,19 @@ public class NetworkManager
                         Network network = GenerateNetwork(original);
                         network.Randomize(range);
                         SGDOptimizer optimizer = new SGDOptimizer(network, lossFunction, learningRate);
+                        optimizer.Optimize(data.inputs, data.outputs, epochs);
+                        generations.Add(network.Loss(data.inputs, data.outputs, lossFunction));
+                    });
+                }
+                break;
+            case OptimizerType.Adam:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, _ =>
+                    {
+                        Network network = GenerateNetwork(original);
+                        network.Randomize(range);
+                        AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add(network.Loss(data.inputs, data.outputs, lossFunction));
                     });
