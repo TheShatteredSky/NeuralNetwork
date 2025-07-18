@@ -59,7 +59,7 @@ public class NetworkManager
     {
         for (int i = 0; i < _networks.Count; i++)
             if (_networks[i].GetName() == name) return i;
-        throw new Exception($"Network {name} not found");
+        throw new Exception($"Network {name} not found.");
     }
     
     public Network GetNetwork(int index)
@@ -93,7 +93,7 @@ public class NetworkManager
     {
         for (int i = 0; i < _datasets.Count; i++)
             if (_datasets[i].name == name) return i;
-        throw new Exception($"Dataset {name} not found");
+        throw new Exception($"Dataset {name} not found.");
     }
 
     public void AddDataset((double[][] inputs, double[][] outputs) data, string name)
@@ -158,46 +158,47 @@ public class NetworkManager
         return network;
     }
     
-    public void Optimize(int networkIndex, int datasetIndex, Optimizer.LossFunction lossFunction, double learningRate, uint epochs, Optimizer.OptimizerType optimizerType)
+    public void Optimize(int networkIndex, int datasetIndex, LossType lossFunction, double learningRate, uint epochs, OptimizerType optimizerType)
     {
         Network original = _networks[networkIndex];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[datasetIndex];
         Optimize(original, (data.inputs, data.outputs), lossFunction, learningRate, epochs, optimizerType);
     }
 
-    public void Optimize(string networkName, string datasetName,  Optimizer.LossFunction lossFunction, double learningRate,uint epochs, Optimizer.OptimizerType optimizerType)
+    public void Optimize(string networkName, string datasetName, LossType lossFunction, double learningRate,uint epochs, OptimizerType optimizerType)
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[GetDatasetIndexFromName(datasetName)];
         Optimize(original, (data.inputs, data.outputs), lossFunction, learningRate, epochs, optimizerType);
     }
     
-    public static void Optimize(Network original, (double[][] inputs, double[][] outputs) data, Optimizer.LossFunction lossFunction, double learningRate, uint epochs, Optimizer.OptimizerType optimizerType)
+    public static void Optimize(Network original, (double[][] inputs, double[][] outputs) data, LossType lossFunction, double learningRate, uint epochs, OptimizerType optimizerType)
     {
         switch (optimizerType)
         {
-            case Optimizer.OptimizerType.SGD:
+            case OptimizerType.SGD:
                 SGDOptimizer optimizer = new SGDOptimizer(original, lossFunction, learningRate);
                 optimizer.Optimize(data.inputs, data.outputs, epochs);
                 break;
         }
     }
     
-    public Network FindBest(int networkIndex, int datasetIndex, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    public Network FindBest(int networkIndex, int datasetIndex, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         Network original = _networks[networkIndex];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[datasetIndex];
         return FindBest(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
 
-    public Network FindBest(string networkName, string datasetName,  Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    public Network FindBest(string networkName, string datasetName, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[GetDatasetIndexFromName(datasetName)];
         return FindBest(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
     
-    public static Network FindBest(Network original, (double[][] inputs, double[][] outputs) data, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    //TODO: Make this store the setting arrays of the networks instead of the networks themselves to save memory.
+    public static Network FindBest(Network original, (double[][] inputs, double[][] outputs) data, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         ConcurrentBag<(Network network, double score)> generations = new();
         int coreCount = Environment.ProcessorCount;
@@ -205,7 +206,7 @@ public class NetworkManager
         generations.Add((original, original.Loss(data.inputs, data.outputs, lossFunction)));
         switch (optimizerType)
         {
-            case Optimizer.OptimizerType.SGD:
+            case OptimizerType.SGD:
                 for (int i = 0; i < cuts; i++)
                 {
                     Parallel.For(0, coreCount, _ =>
@@ -218,32 +219,45 @@ public class NetworkManager
                     });
                 }
                 break;
+            case OptimizerType.Adam:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, _ =>
+                    {
+                        Network network = GenerateNetwork(original);
+                        network.Randomize(range);
+                        AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
+                        optimizer.Optimize(data.inputs, data.outputs, epochs);
+                        generations.Add((network, network.Loss(data.inputs, data.outputs, lossFunction)));
+                    });
+                }
+                break;
         }
         return generations.ToArray().OrderBy(x => x.score).First().network;
     }
     
-    public Network[] GenerateAlternates(int networkIndex, int datasetIndex, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    public Network[] GenerateAlternates(int networkIndex, int datasetIndex, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         Network original = _networks[networkIndex];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[datasetIndex];
         return GenerateAlternates(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
     
-    public Network[] GenerateAlternates(string networkName, string datasetName, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    public Network[] GenerateAlternates(string networkName, string datasetName, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[GetDatasetIndexFromName(datasetName)];
         return GenerateAlternates(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
     
-    public static Network[] GenerateAlternates(Network original, (double[][] inputs, double[][] outputs) data, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    public static Network[] GenerateAlternates(Network original, (double[][] inputs, double[][] outputs) data, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         ConcurrentBag<Network> generations = new();
         int coreCount = Environment.ProcessorCount;
         int cuts = (int)attempts / coreCount;
         switch (optimizerType)
         {
-            case Optimizer.OptimizerType.SGD:
+            case OptimizerType.SGD:
                 for (int i = 0; i < cuts; i++)
                 {
                     Parallel.For(0, coreCount, _ =>
@@ -256,25 +270,38 @@ public class NetworkManager
                     });
                 }
                 break;
+            case OptimizerType.Adam:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, _ =>
+                    {
+                        Network network = GenerateNetwork(original);
+                        network.Randomize(range);
+                        AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
+                        optimizer.Optimize(data.inputs, data.outputs, epochs);
+                        generations.Add(network);
+                    });
+                }
+                break;
         }
         return generations.ToArray();
     }
     
-    public double[] GenerateScores(int networkIndex, int datasetIndex, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    public double[] GenerateScores(int networkIndex, int datasetIndex, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         Network original = _networks[networkIndex];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[datasetIndex];
         return GenerateScores(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
     
-    public double[] GenerateScores(string networkName, string datasetName, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    public double[] GenerateScores(string networkName, string datasetName, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         (string name, double[][] inputs, double[][] outputs) data = _datasets[GetDatasetIndexFromName(datasetName)];
         return GenerateScores(original, (data.inputs, data.outputs), lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
     
-    public static double[] GenerateScores(Network original, (double[][] inputs, double[][] outputs) data, Optimizer.LossFunction lossFunction, double learningRate, uint range, uint epochs, uint attempts, Optimizer.OptimizerType optimizerType)
+    public static double[] GenerateScores(Network original, (double[][] inputs, double[][] outputs) data, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         ConcurrentBag<double> generations = new();
         int coreCount = Environment.ProcessorCount;
@@ -282,7 +309,7 @@ public class NetworkManager
         generations.Add(original.Loss(data.inputs, data.outputs, lossFunction));
         switch (optimizerType)
         {
-            case Optimizer.OptimizerType.SGD:
+            case OptimizerType.SGD:
                 for (int i = 0; i < cuts; i++)
                 {
                     Parallel.For(0, coreCount, _ =>
@@ -290,6 +317,19 @@ public class NetworkManager
                         Network network = GenerateNetwork(original);
                         network.Randomize(range);
                         SGDOptimizer optimizer = new SGDOptimizer(network, lossFunction, learningRate);
+                        optimizer.Optimize(data.inputs, data.outputs, epochs);
+                        generations.Add(network.Loss(data.inputs, data.outputs, lossFunction));
+                    });
+                }
+                break;
+            case OptimizerType.Adam:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, _ =>
+                    {
+                        Network network = GenerateNetwork(original);
+                        network.Randomize(range);
+                        AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add(network.Loss(data.inputs, data.outputs, lossFunction));
                     });

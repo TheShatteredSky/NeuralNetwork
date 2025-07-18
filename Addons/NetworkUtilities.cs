@@ -31,6 +31,14 @@ public static class NetworkUtilities
             }
         }
     }
+
+    public static void ScaleData(double[][] data, double[] scales)
+    {
+        int columns = scales.Length;
+        for (int column = 0; column < columns; column++)
+            for (int row = 0; row < data.Length; row++)
+                data[row][column] /= scales[column];
+    }
     
     public static void SaveToFile(string filePath, Network network) => File.WriteAllText(filePath, network.ToString());
 
@@ -66,7 +74,7 @@ public static class NetworkUtilities
                 ushort dimensions = ushort.Parse(nodeData[0]);
                 double[] weights = nodeData[1].Split(',').Select(w => double.Parse(w, CultureInfo.InvariantCulture)).ToArray();
                 double bias = double.Parse(nodeData[2], CultureInfo.InvariantCulture);
-                Node.ActivationType activation = Enum.Parse<Node.ActivationType>(nodeData[3]);
+                ActivationType activation = Enum.Parse<ActivationType>(nodeData[3]);
                 ushort[] parents = nodeData[4].Split(',').Select(ushort.Parse).ToArray();
                 Node node = new Node(
                     (ushort)nodeIndex,
