@@ -93,7 +93,7 @@ public class Network
         double[][] outputs = new double[inputs.Length][];
         for (int i = 0; i < inputs.Length; i++)
         {
-            if (inputs[i].Length != this[0].GetSize()) throw new ArgumentException("Number of inputs does not match the size of the input layer.");
+            if (inputs[i].Length != this[0].GetSize()) throw new ArgumentException($"Number of inputs does not match the size of the input layer. (Sample #{i})");
             outputs[i] = ProcessSingle(inputs[i]);
         }
 
@@ -114,7 +114,7 @@ public class Network
         double totalError = 0;
         for (int i = 0; i < inputs.Length; i++)
         {
-            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException("Number of expected outputs does not match the number of outputs this network generates.");
+            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
             double[] predictions = ProcessSingle(inputs[i]);
             double sampleLoss = 0;
             switch (lossType)
@@ -145,7 +145,7 @@ public class Network
         double totalError = 0;
         for (int i = 0; i < inputs.Length; i++)
         {
-            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException("Number of expected outputs does not match the number of outputs this network generates.");
+            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
             double currError = 0;
             double[] predictions = ProcessSingle(inputs[i]);
             sb.AppendLine($"Input: {string.Join(", ", inputs[i])} Predicted: {string.Join(", ", predictions)} Expected: {string.Join(", ", outputs[i])}");
@@ -177,7 +177,7 @@ public class Network
         double totalError = 0;
         for (int i = 0; i < inputs.Length; i++)
         {
-            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException("Number of expected outputs does not match the number of outputs this network generates.");
+            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
             double currentError = 0;
             double[] predictions = ProcessSingle(inputs[i]);
             for (int j = 0; j < outputs[i].Length; j++)
@@ -195,7 +195,7 @@ public class Network
         double totalError = 0;
         for (int i = 0; i < inputs.Length; i++)
         {
-            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException("Number of expected outputs does not match the number of outputs this network generates.");
+            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
             double currError = 0;
             double[] predictions = ProcessSingle(inputs[i]);
             sb.AppendLine($"Input: {string.Join(", ", inputs[i])} Predicted: {string.Join(", ", predictions)} Expected: {string.Join(", ", outputs[i])}");
