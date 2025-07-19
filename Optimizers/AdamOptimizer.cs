@@ -5,11 +5,12 @@ public sealed class AdamOptimizer : SGDOptimizer
     private const double _decayRateOfFirstMoment = 0.9;
     private const double _decayRateOfSecondMoment = 0.999;
     private const double _epsilon = 0.00000001;
+    private double _mutableDecayRateOfFirstMoment;
+    private double _mutableDecayRateOfSecondMoment;
     private double[][][] _weightFirstMoments;
     private double[][] _biasFirstMoments;
     private double[][][] _weightSecondMoments;
     private double[][] _biasSecondMoments;
-    private double _iteration;
     
     public AdamOptimizer(Network network, LossType lossFunction, double baseLearningRate) : base (network, lossFunction, baseLearningRate)
     {
@@ -17,14 +18,15 @@ public sealed class AdamOptimizer : SGDOptimizer
         _biasFirstMoments = NetworkUtilities.InstantiateBiasArray(network);
         _weightSecondMoments = NetworkUtilities.InstantiateWeightArray(network);
         _biasSecondMoments = NetworkUtilities.InstantiateBiasArray(network);
-        _iteration = 1;
+        _mutableDecayRateOfFirstMoment = _decayRateOfFirstMoment;
+        _mutableDecayRateOfSecondMoment = _decayRateOfSecondMoment;
     }
 
     public override void Optimize(double[][] inputs, double[][] outputs, uint totalEpochs)
     {
-        var scaled = Network.ScaledData(inputs, outputs);
-        inputs = scaled.Item1;
-        outputs = scaled.Item2;
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
+        inputs = unscaled.unscaledInputs;
+        outputs = unscaled.unscaledOutputs;
         double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(Network);
         double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
@@ -36,9 +38,9 @@ public sealed class AdamOptimizer : SGDOptimizer
 
     public override double[] OptimizeTracked(double[][] inputs, double[][] outputs, uint totalEpochs)
     {
-        var scaled = Network.ScaledData(inputs, outputs);
-        inputs = scaled.Item1;
-        outputs = scaled.Item2;
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
+        inputs = unscaled.unscaledInputs;
+        outputs = unscaled.unscaledOutputs;
         List<double> tracker = new List<double>();
         tracker.Add(Network.Loss(inputs, outputs, LossType));
         double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(Network);
@@ -122,17 +124,20 @@ public sealed class AdamOptimizer : SGDOptimizer
         {
             for (int nodeIndex = 0; nodeIndex < Network[layerIndex].GetSize(); nodeIndex++)
             {
+                double decayRateOfFirstMomentReciprocal = 1 - _mutableDecayRateOfFirstMoment;
+                double decayRateOfSecondMomentReciprocal = 1 - _mutableDecayRateOfSecondMoment;
                 for (int weightIndex = 0; weightIndex < Network[layerIndex, nodeIndex].GetDimensions(); weightIndex++)
                 {
-                    double correctedWeightFirstMoment = _weightFirstMoments[layerIndex][nodeIndex][weightIndex] / (1 - Math.Pow(_decayRateOfFirstMoment, _iteration));
-                    double correctedWeightSecondMoment = _weightSecondMoments[layerIndex][nodeIndex][weightIndex] / (1 - Math.Pow(_decayRateOfSecondMoment, _iteration));
+                    double correctedWeightFirstMoment = _weightFirstMoments[layerIndex][nodeIndex][weightIndex] / decayRateOfFirstMomentReciprocal;
+                    double correctedWeightSecondMoment = _weightSecondMoments[layerIndex][nodeIndex][weightIndex] / decayRateOfSecondMomentReciprocal;
                     Network[layerIndex, nodeIndex, weightIndex] -= LearningRate * correctedWeightFirstMoment / (Math.Sqrt(correctedWeightSecondMoment) + _epsilon);
                 }
-                double correctedBiasFirstMoment = _biasFirstMoments[layerIndex][nodeIndex] / (1 - Math.Pow(_decayRateOfFirstMoment, _iteration));
-                double correctedBiasSecondMoment = _biasSecondMoments[layerIndex][nodeIndex] / (1 - Math.Pow(_decayRateOfSecondMoment, _iteration));
+                double correctedBiasFirstMoment = _biasFirstMoments[layerIndex][nodeIndex] / decayRateOfFirstMomentReciprocal;
+                double correctedBiasSecondMoment = _biasSecondMoments[layerIndex][nodeIndex] / decayRateOfSecondMomentReciprocal;
                 Network[layerIndex, nodeIndex, Network[layerIndex, nodeIndex].GetDimensions()] -= LearningRate * correctedBiasFirstMoment / (Math.Sqrt(correctedBiasSecondMoment) + _epsilon);
             }
         }
-        _iteration++;
+        _mutableDecayRateOfFirstMoment *= _decayRateOfFirstMoment;
+        _mutableDecayRateOfSecondMoment *=  _decayRateOfSecondMoment;
     }
 }
