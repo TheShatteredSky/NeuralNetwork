@@ -1,5 +1,8 @@
 namespace NeuralNetwork.Core;
 
+/// <summary>
+/// A Node instance.
+/// </summary>
 public class Node
 {
    private readonly ushort _identifier;
@@ -10,15 +13,17 @@ public class Node
    private ActivationType _activation;
    private ushort[] _parents;
 
+   /// <summary>
+   /// Indexer for the Node's parameters.
+   /// </summary>
+   /// <param name="param">The index of the parameter, 0 to dimensions - 1 will return the specified weight, while dimensions will return the bias.</param>
    public double this[int param]
    {
        get => param < _dimensions ? _weights[param] : _bias;
        set
        {
-           if (param < _dimensions)
-               _weights[param] = value;
-           else
-               _bias = value;
+           if (param < _dimensions) _weights[param] = value;
+           else _bias = value;
        }
    }
    

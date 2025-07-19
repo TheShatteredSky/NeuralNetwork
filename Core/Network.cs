@@ -1,7 +1,7 @@
 namespace NeuralNetwork.Core;
 
 /// <summary>
-/// A Neural Network instance.
+/// A Network instance.
 /// </summary>
 public class Network
 {
@@ -87,7 +87,7 @@ public class Network
     /// Fetches the name of the Network.
     /// </summary>
     /// <returns>The name of the Network.</returns>
-    public void SetName(string newName) => _name = newName;
+    public void GetName(string newName) => _name = newName;
 
     public string GetName() => _name!;
     
