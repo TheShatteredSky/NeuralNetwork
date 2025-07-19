@@ -2,7 +2,6 @@ namespace NeuralNetwork.Addons;
 
 public class NetworkManager
 {
-    private string _name;
     private List<Network> _networks;
     private List<(string name, double[][] inputs, double[][] outputs)> _datasets;
     private bool _log;
@@ -10,7 +9,6 @@ public class NetworkManager
     
     public NetworkManager()
     {
-        _name = "#";
         _networks = [];
         _datasets = [];
         _log = false;
@@ -30,8 +28,6 @@ public class NetworkManager
     }
     
     public void StopLogging() => _log = false;
-    public void SetName(string name) => _name = name;
-    public string GetName() =>  _name;
     
     public Network[] GetNetworks() => _networks.ToArray();
 

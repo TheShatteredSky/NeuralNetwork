@@ -26,11 +26,8 @@ public class Layer
     {
         _size = size;
         _nodes = new Node[size];
-        ushort[] parents = new ushort[previousLayerSize];
-        for (int i = 0; i < previousLayerSize; i++)
-            parents[i] = (ushort)i;
         for (int i = 0; i < _nodes.Length; i++)
-            _nodes[i] = new Node((ushort)i, _identifier, (ushort)(_identifier == 0 ? 1 : previousLayerSize), activationType, _identifier == 0 ? [(ushort)i] : parents);
+            _nodes[i] = new Node((ushort)i, _identifier, (ushort)(_identifier == 0 ? 1 : previousLayerSize), activationType, _identifier == 0 ? [(ushort)i] : null);
     }
     
     public ushort GetSize() => _size;
@@ -69,7 +66,8 @@ public class Layer
 
     internal double[] NodeInputs(double[] inputs, int n)
     {
-        return _nodes[n].GetParentCount() == inputs.Length ? inputs : _nodes[n].GetParents().Select(parentIndex => inputs[parentIndex]).ToArray();
+        ushort[]? parents = _nodes[n].GetParents();
+        return parents == null ? inputs : parents.Select(x => inputs[x]).ToArray();
     }
 
     internal double[] SoftmaxOutputs(double[] weightedSums)

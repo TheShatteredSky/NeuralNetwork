@@ -104,16 +104,8 @@ public static class NetworkUtilities
                 double[] weights = nodeData[1].Split(',').Select(w => double.Parse(w, CultureInfo.InvariantCulture)).ToArray();
                 double bias = double.Parse(nodeData[2], CultureInfo.InvariantCulture);
                 ActivationType activation = Enum.Parse<ActivationType>(nodeData[3]);
-                ushort[] parents = nodeData[4].Split(',').Select(ushort.Parse).ToArray();
-                Node node = new Node(
-                    (ushort)nodeIndex,
-                    (ushort)layerIdx,
-                    dimensions,
-                    weights,
-                    bias,
-                    activation,
-                    parents
-                );
+                ushort[]? parents = nodeData[4] == "#" ? null : nodeData[4].Split(',').Select(ushort.Parse).ToArray();
+                Node node = new Node((ushort)nodeIndex, (ushort)layerIdx, dimensions, weights, bias, activation, parents);
                 layer[nodeIndex] = node;
                 currentLine++;
             }

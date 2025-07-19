@@ -94,10 +94,19 @@ public class SGDOptimizer : IOptimizer
                 {
                     delta = 0;
                     Layer downstreamLayer = Network[layerIndex + 1];
-                    foreach (Node downstreamNode in downstreamLayer.GetNodes())
-                        for (int parentIndex = 0; parentIndex < downstreamNode.GetParents().Length; parentIndex++)
-                            if (downstreamNode.GetParents()[parentIndex] == nodeIndex)
-                                delta += downstreamNode.GetWeights()[parentIndex] * nextLayerDeltas[Array.IndexOf(downstreamLayer.GetNodes(), downstreamNode)];
+                    for (int n = 0; n < downstreamLayer.GetSize(); n++)
+                    {
+                        Node downstreamNode = downstreamLayer[n];
+                        ushort[]? parents = downstreamNode.GetParents();
+                        if (parents == null) delta += downstreamNode.GetWeights()[nodeIndex] * nextLayerDeltas[n];
+                        else
+                        {
+                            for (int parentIndex = 0; parentIndex < parents.Length; parentIndex++)
+                                if (parents[parentIndex] == nodeIndex)
+                                    delta += downstreamNode.GetWeights()[parentIndex] * nextLayerDeltas[n];
+                        }
+                    }
+
                     delta *= activationRecord.ActivationDerivative;
                 }
                 currentLayerDeltas[nodeIndex] = delta;

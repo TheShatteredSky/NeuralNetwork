@@ -60,9 +60,19 @@ public class Network
     {
         _networkLayers = new Layer[hiddenLayers + 2];
         _layerCount = (ushort)(hiddenLayers + 2);
-        CreateInputLayer(inputSize, inputActivation);
-        CreateHiddenLayers(hiddenSize, hiddenActivation);
-        CreateOutputLayer(outputSize, outputActivation);
+        InstantiateInputLayer(inputSize, inputActivation);
+        InstantiateHiddenLayers(hiddenSize, hiddenActivation);
+        InstantiateOutputLayer(outputSize, outputActivation);
+    }
+    
+    /// <summary>
+    /// Fetches the name of the Network.
+    /// </summary>
+    /// <returns>The name of the Network.</returns>
+    public string GetName()
+    {
+        if (_name == null) throw new Exception("Network doesn't have a name.");
+        return _name;
     }
     
     /// <summary>
@@ -84,21 +94,13 @@ public class Network
     public void SetOutputScaling((double, double, double)[] scales) => _outputScaling = scales;
     
     /// <summary>
-    /// Fetches the name of the Network.
-    /// </summary>
-    /// <returns>The name of the Network.</returns>
-    public void GetName(string newName) => _name = newName;
-
-    public string GetName() => _name!;
-    
-    /// <summary>
     /// Fetches the Layer count of the Network.
     /// </summary>
     /// <returns>The number of layers in the network.</returns>
     public ushort GetLayerCount() => _layerCount;
     
     /// <summary>
-    /// Fetches to Layer array of the network.
+    /// Fetches the Layer array of the Network.
     /// ⚠ This returns a reference to the actual array the Network uses, modifying it will modify the that of Network too.
     /// </summary>
     /// <returns>The Layer array of the Network.
@@ -106,7 +108,7 @@ public class Network
     public Layer[] GetLayers() => _networkLayers;
 
     /// <summary>
-    /// Indexer for the network's Layers.
+    /// Indexer for the Network's Layers.
     /// ⚠ This returns a reference to the actual Layer the Network uses, modifying it will modify the that of Network too.
     /// </summary>
     /// <param name="layer">The index of the Layer.</param>
@@ -141,12 +143,12 @@ public class Network
     }
 
     /// <summary>
-    /// Creates the input Layer of the Network.
+    /// Instantiates the input Layer of the Network.
     /// </summary>
     /// <param name="numberOfNodes">The number of Nodes in the input Layer.</param>
     /// <param name="activation">The activation for the input Nodes.</param>
     /// <exception cref="ArgumentException"></exception>
-    public void CreateInputLayer(ushort numberOfNodes, ActivationType activation)
+    public void InstantiateInputLayer(ushort numberOfNodes, ActivationType activation)
     {
         if (activation == ActivationType.Softmax) throw new ArgumentException("Input layers cannot have a Softmax activation.");
         Layer input = new Layer(0, LayerType.Input);
@@ -155,12 +157,12 @@ public class Network
     }
     
     /// <summary>
-    /// Creates the hidden Layers of the Network.
+    /// Instantiates the hidden Layers of the Network.
     /// </summary>
     /// <param name="numberOfNodes">The number of Nodes in each hidden Layer.</param>
     /// <param name="activation">The activation for the hidden Nodes.</param>
     /// <exception cref="ArgumentException"></exception>
-    public void CreateHiddenLayers(ushort numberOfNodes, ActivationType activation)
+    public void InstantiateHiddenLayers(ushort numberOfNodes, ActivationType activation)
     {
         if (activation == ActivationType.Softmax) throw new ArgumentException("Hidden layers cannot have a Softmax activation.");
         Layer afterInputLayer = new Layer(1, LayerType.Hidden);
@@ -175,12 +177,12 @@ public class Network
     }
 
     /// <summary>
-    /// Creates the output Layer of the Network.
+    /// Instantiates the output Layer of the Network.
     /// </summary>
     /// <param name="numberOfNodes">The number of Nodes in the output Layer.</param>
     /// <param name="activation">The activation for the output Nodes.</param>
     /// <exception cref="ArgumentException"></exception>
-    public void CreateOutputLayer(ushort numberOfNodes, ActivationType activation)
+    public void InstantiateOutputLayer(ushort numberOfNodes, ActivationType activation)
     {
         Layer output = new Layer((ushort)(_layerCount - 1)!, LayerType.Output);
         output.Instantiate(numberOfNodes, _networkLayers[_layerCount - 2].GetSize(), activation);
@@ -195,9 +197,7 @@ public class Network
     /// <returns>The unscaled inputs and outputs.</returns>
     public (double[][] unscaledInputs, double[][] unscaledOuputs) UnscaledData(double[][] inputs, double[][] outputs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOuputs) unscaledData = new();
-        unscaledData.unscaledInputs = new double[inputs.Length][];
-        unscaledData.unscaledOuputs = new double[outputs.Length][];
+        (double[][] unscaledInputs, double[][] unscaledOuputs) unscaledData = (new double[inputs.Length][],  new double[outputs.Length][]);
         for (int i = 0; i < inputs.Length; i++)
             unscaledData.unscaledInputs[i] = UnscaledInputs(inputs[i]);
         for (int i = 0; i < outputs.Length; i++)
@@ -213,9 +213,7 @@ public class Network
     /// <returns>The scaled inputs and outputs.</returns>
     public (double[][] scaledInputs, double[][] scaledOuputs) ScaledData(double[][] inputs, double[][] outputs)
     {
-        (double[][] scaledInputs, double[][] scaledOuputs) scaledData = new();
-        scaledData.scaledInputs = new double[inputs.Length][];
-        scaledData.scaledOuputs = new double[outputs.Length][];
+        (double[][] scaledInputs, double[][] scaledOuputs) scaledData = (new double[inputs.Length][],  new double[outputs.Length][]);
         for (int i = 0; i < inputs.Length; i++)
             scaledData.scaledInputs[i] = ScaledInputs(inputs[i]);
         for (int i = 0; i < outputs.Length; i++)
@@ -406,7 +404,7 @@ public class Network
         sb.AppendLine("#SCALES");
         if (_inputScaling == null) sb.AppendLine("#");
         else for (int i = 0; i < _inputScaling.Length; i++)
-            sb.AppendLine(_inputScaling[i].shift + "," + _inputScaling[i].scale + "," + _inputScaling[i].deshift + (i == _outputScaling.Length - 1 ? "" : ";"));
+            sb.AppendLine(_inputScaling[i].shift + "," + _inputScaling[i].scale + "," + _inputScaling[i].deshift + (i == _inputScaling.Length - 1 ? "" : ";"));
         if (_outputScaling == null) sb.AppendLine("#");
         else for (int i = 0; i < _outputScaling.Length; i++)
             sb.Append(_outputScaling[i].shift + "," + _outputScaling[i].scale + "," + _outputScaling[i].deshift + (i == _outputScaling.Length - 1 ? "" : ";"));
@@ -442,10 +440,11 @@ public class Network
         {
             for (int n = 0; n < this[l].GetSize(); n++)
             {
-                ushort[] parents = new ushort[this[l, n].GetParentCount()];
+                ushort[]? parents = this[l, n].GetParents() == null ? null : new ushort[this[l, n].GetParentCount()];
                 double[] weights = new double[this[l, n].GetDimensions()];
-                for (int p = 0; p < this[l, n].GetParentCount(); p++)
-                    parents[p] = this[l, n].GetParents()[p];
+                if (parents != null) 
+                    for (int p = 0; p < this[l, n].GetParentCount(); p++)
+                        parents[p] = this[l, n].GetParents()![p];
                 for (int w = 0; w < this[l, n].GetDimensions(); w++)
                     weights[w] = this[l, n].GetWeights()[w];
                 network[l, n].SetParents(parents);
