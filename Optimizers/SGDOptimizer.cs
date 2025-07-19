@@ -15,9 +15,9 @@ public class SGDOptimizer : IOptimizer
     
     public virtual void Optimize(double[][] inputs, double[][] outputs, uint totalEpochs)
     {
-        var scaled = Network.ScaledData(inputs, outputs);
-        inputs = scaled.Item1;
-        outputs = scaled.Item2;
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
+        inputs = unscaled.unscaledInputs;
+        outputs = unscaled.unscaledOutputs;
         double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(Network);
         double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
@@ -29,9 +29,9 @@ public class SGDOptimizer : IOptimizer
 
     public virtual double[] OptimizeTracked(double[][] inputs, double[][] outputs, uint totalEpochs)
     {
-        var scaled = Network.ScaledData(inputs, outputs);
-        inputs = scaled.Item1;
-        outputs = scaled.Item2;
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
+        inputs = unscaled.unscaledInputs;
+        outputs = unscaled.unscaledOutputs;
         List<double> tracker = new List<double>();
         tracker.Add(Network.Loss(inputs, outputs, LossType));
         double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(Network);
