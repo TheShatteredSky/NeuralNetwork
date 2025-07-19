@@ -103,7 +103,7 @@ public class Network
     /// <summary>
     /// Fetches the name of this Network.
     /// </summary>
-    /// <returns>The name of this Network.</returns>
+    /// <returns>This Network's name.</returns>
     public string GetName()
     {
         if (_name == null) throw new Exception("Network doesn't have a name.");
@@ -131,15 +131,14 @@ public class Network
     /// <summary>
     /// Fetches the Layer count of this Network.
     /// </summary>
-    /// <returns>The number of layers in this Network.</returns>
+    /// <returns>This Network's Layer count.</returns>
     public ushort GetLayerCount() => _layerCount;
     
     /// <summary>
     /// Fetches the Layer array of this Network.
     /// ⚠ This method returns a reference to the actual array this Network uses, modifying it will modify the that of Network too.
     /// </summary>
-    /// <returns>The Layer array of this Network.
-    /// </returns>
+    /// <returns>This Network's Layer array./// </returns>
     public Layer[] GetLayers() => _networkLayers;
 
     /// <summary>

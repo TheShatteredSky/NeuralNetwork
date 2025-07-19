@@ -105,7 +105,7 @@ public static class NetworkUtilities
                 double bias = double.Parse(nodeData[2], CultureInfo.InvariantCulture);
                 ActivationType activation = Enum.Parse<ActivationType>(nodeData[3]);
                 ushort[]? parents = nodeData[4] == "#" ? null : nodeData[4].Split(',').Select(ushort.Parse).ToArray();
-                Node node = new Node((ushort)nodeIndex, (ushort)layerIdx, dimensions, weights, bias, activation, parents);
+                Node node = new Node(dimensions, weights, bias, activation, parents);
                 layer[nodeIndex] = node;
                 currentLine++;
             }

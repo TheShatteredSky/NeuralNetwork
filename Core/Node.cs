@@ -5,8 +5,6 @@ namespace NeuralNetwork.Core;
 /// </summary>
 public class Node
 {
-   private readonly ushort _identifier;
-   private readonly ushort _layerIdentifier;
    private ushort _dimensions;
    private double[] _weights;
    private double _bias;
@@ -14,7 +12,7 @@ public class Node
    private ushort[]? _parents;
 
    /// <summary>
-   /// Indexer for the Node's parameters.
+   /// Indexer for this Node's parameters.
    /// </summary>
    /// <param name="param">The index of the parameter, 0 to dimensions - 1 will return the specified weight, while dimensions will return the bias.</param>
    public double this[int param]
@@ -30,40 +28,32 @@ public class Node
    /// <summary>
    /// A new Node.
    /// </summary>
-   /// <param name="identifier">The index of the Node in its Layer.</param>
-   /// <param name="layerIdentifier">The index of the Node's Layer in its Network.</param>
    /// <param name="dimensions">The number of inputs the Node takes.</param>
    /// <param name="weights">The Node's weights.</param>
    /// <param name="bias">The Node's bias.</param>
    /// <param name="activation">The Node's activation function.</param>
    /// <param name="parents">The Node's parents.</param>
    /// <exception cref="ArgumentException"></exception>
-   public Node(ushort identifier, ushort layerIdentifier, ushort dimensions, double[] weights, double bias, ActivationType activation, ushort[]? parents)
+   public Node(ushort dimensions, double[] weights, double bias, ActivationType activation, ushort[]? parents)
    {
-       _identifier = identifier;
-       _layerIdentifier = layerIdentifier;
        if (dimensions != weights.Length) throw new ArgumentException("The number of dimensions does not match the number of weights.");
        _dimensions = dimensions;
        _activation = activation;
        _weights = weights;
        _bias = bias;
-       if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the node's dimensions.");
+       if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
        _parents = parents;
    }
    
    /// <summary>
    /// A new Node.
    /// </summary>
-   /// <param name="identifier">The index of the Node in its Layer.</param>
-   /// <param name="layerIdentifier">The index of the Node's Layer in its Network.</param>
    /// <param name="dimensions">The number of inputs the Node takes.</param>
    /// <param name="activation">The Node's activation function.</param>
    /// <param name="parents">The Node's parents.</param>
    /// <exception cref="ArgumentException"></exception>
-   public Node(ushort identifier, ushort layerIdentifier, ushort dimensions, ActivationType activation, ushort[]? parents)
+   public Node(ushort dimensions, ActivationType activation, ushort[]? parents)
    {
-       _identifier = identifier;
-       _layerIdentifier = layerIdentifier;
        _dimensions = dimensions;
        _weights = new double[dimensions];
        for (int i = 0; i < _weights.Length; i++)
@@ -85,79 +75,107 @@ public class Node
        }
        _bias = 0;
        _activation = activation;
-       if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the node's dimensions.");
+       if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
        _parents = parents;
    }
    
-   public void SetDimensions(ushort dimensions)
-   { 
-       _dimensions = dimensions;
-       double[] old = new double[_weights.Length];
-       for (int i = 0; i < _weights.Length; i++)
-           old[i] = _weights[i];
-       _weights = new double[dimensions];
-       for (int i = 0; i < old.Length; i++)
-           _weights[i] = old[i];
-       for (int i = old.Length; i < _weights.Length; i++)
-           _weights[i] = 1;
+   /// <summary>
+   /// Sets the amount of weights and parents this Node has.
+   /// ⚠ This will completely wipe the Node's weights and set its parents to all.
+   /// </summary>
+   /// <param name="size">The new size of the Node.</param>
+   public void SetSize(ushort size)
+   {
+       _weights = new double[size];
+       _dimensions = size;
+       _parents = null;
    }
    
+   /// <summary>
+   /// Sets the weights of this Node. The new weight array should be the same size as the previous. If you wish to change its size, use SetSize() first.
+   /// </summary>
+   /// <param name="weights">The new weights for the Node.</param>
+   /// <exception cref="ArgumentException"></exception>
    public void SetWeights(double[] weights)
    { 
-       if (weights.Length != _dimensions) throw new ArgumentException("The new given weight array is greater in size than the previous, set a new dimension count beforehand.");
-       _weights = weights;
-   } 
+       if (weights.Length != _dimensions) throw new ArgumentException("The given weight array is greater in size than the current, set a new size beforehand.");
+       for (int i = 0; i < weights.Length; i++)
+           _weights[i] = weights[i];
+   }
    
+   /// <summary>
+   /// Sets the bias of this Node.
+   /// </summary>
+   /// <param name="bias">The new bias for the Node.</param>
    public void SetBias(double bias) => _bias = bias;
    
+   /// <summary>
+   /// Sets the activation function of this Node.
+   /// </summary>
+   /// <param name="activation">The new activation function of the Node.</param>
    public void SetActivation(ActivationType activation) => _activation = activation;
    
+   /// <summary>
+   /// Sets the parents of this Node. The new parents array should be the same size as the previous. If you wish to change its size, use SetSize() first.
+   /// </summary>
+   /// <param name="parents">The new parents for the Node. Use null for all parents.</param>
+   /// <exception cref="ArgumentException"></exception>
    public void SetParents(ushort[]? parents)
    {
-       if (parents != null && parents.Length > _dimensions) throw new ArgumentException("The given parents are more numerous than the node's dimensions.");
+       if (parents != null && parents.Length > _dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
        _parents = parents;
    } 
    
+   /// <summary>
+   /// Fetches the number of parents this Node has.
+   /// </summary>
+   /// <returns>This Node's parent count.</returns>
    public ushort GetParentCount()
    {
        if (_parents == null) return _dimensions;
        return (ushort)_parents.Length;
    }
    
-   public ushort GetIdentifier() => _identifier;
+   /// <summary>
+   /// Fetches the number of weights and parents this Node can have.
+   /// </summary>
+   /// <returns>This Node's dimensions count.</returns>
+   public ushort GetSize() => _dimensions;
    
-   public ushort GetDimensions() => _dimensions;
-   
+   /// <summary>
+   /// Fetches the weights of this Node.
+   /// </summary>
+   /// <returns>This Node's weights.</returns>
    public double[] GetWeights() => _weights;
    
+   /// <summary>
+   /// Fetches the bias of this Node.
+   /// </summary>
+   /// <returns>This Node's bias.</returns>
    public double GetBias() => _bias;
    
+   /// <summary>
+   /// Fetches the activation function of this Node.
+   /// </summary>
+   /// <returns>This Node's activation function.</returns>
    public ActivationType GetActivation() => _activation;
    
+   /// <summary>
+   /// Fetches the parents of this Node.
+   /// </summary>
+   /// <returns>This Node's parents.</returns>
    public ushort[]? GetParents() => _parents;
    
-   public Node[] GetDirectParents(Network network)
-   {
-       Layer layer = network[_layerIdentifier - 1];
-       if (_parents == null) return layer.GetNodes();
-       Node[] parents = new Node[_parents.Length];
-       for (int i = 0; i < _parents.Length; i++)
-           parents[i] = layer[_parents[i]];
-       return parents;
-   }
-
-   public Node[] GetDirectChildren(Network network)
-   {
-       Layer layer = network[_layerIdentifier + 1]; 
-       List<Node> children = new List<Node>();
-       for (int i = 0; i < layer.GetSize(); i++)
-           if (layer[i].GetParents() == null || layer[i].GetParents()!.Contains(_identifier)) children.Add(layer[i]);
-       return children.ToArray();
-   }
-   
+   /// <summary>
+   /// Computes the outputs of this Node.
+   /// </summary>
+   /// <param name="input">The inputs for this Node.</param>
+   /// <returns>The outputs of this Node.</returns>
+   /// <exception cref="ArgumentException"></exception>
+   /// <exception cref="Exception"></exception>
    public double Process(double[] input)
    {
-       if (input.Length != _dimensions) throw new ArgumentException("The given input does not match the size expected by the node.");
+       if (input.Length != _dimensions) throw new ArgumentException("The given input does not match the size expected by the Node.");
        double result = WeightedSum(input);
        switch (_activation)
        {
@@ -184,17 +202,24 @@ public class Node
            case ActivationType.NEX:
                return ActivationFunction.NEX(result);
            case ActivationType.Softmax:
-               throw new Exception("Softmax should be handled at the layer level.");
+               throw new Exception("Softmax should be handled at the Layer level.");
            default:
                return 0;
        }
    }
 
-   internal double WeightedSum(double[] input)
-   {
-       return DotProduct(input) + _bias;
-   }
+   /// <summary>
+   /// Computes the weighted sum of this Node.
+   /// </summary>
+   /// <param name="input">The inputs for this Node.</param>
+   /// <returns>The weighted sum of this Node.</returns>
+   internal double WeightedSum(double[] input) => DotProduct(input) + _bias;
 
+   /// <summary>
+   /// Computes the dot product of this Node's weights and the inputs.
+   /// </summary>
+   /// <param name="inputs">The inputs for this Node.</param>
+   /// <returns>The dot product of this Node.</returns>
    private double DotProduct(double[] inputs)
    {
        int vectorSize = Vector<double>.Count;
@@ -216,8 +241,10 @@ public class Node
        return sum;
    }
    
-   public override string ToString()
-   {
-       return $"{_dimensions};" + $"{string.Join(",", _weights.Select(w => w.ToString(CultureInfo.InvariantCulture)))};" + $"{_bias.ToString(CultureInfo.InvariantCulture)};" + $"{_activation};" + $"{(_parents == null ? "#" : string.Join(",", _parents))}" + "\n";
-   }
+   /// <summary>
+   /// The formatted string representing this Node.
+   /// ⚠ This is a custom format, not JSON.
+   /// </summary>
+   /// <returns>A string representing this Node.</returns>
+   public override string ToString() => $"{_dimensions};" + $"{string.Join(",", _weights.Select(w => w.ToString(CultureInfo.InvariantCulture)))};" + $"{_bias.ToString(CultureInfo.InvariantCulture)};" + $"{_activation};" + $"{(_parents == null ? "#" : string.Join(",", _parents))}" + "\n";
 }

@@ -2,7 +2,6 @@ namespace NeuralNetwork.Core;
 
 public class Layer
 {
-    private readonly ushort _identifier;
     private ushort _size;
     private Node[] _nodes;
     private LayerType _type;
@@ -15,8 +14,7 @@ public class Layer
     
     public Layer(ushort identifier, LayerType type)
     {
-        _identifier = identifier;
-        if (identifier == 0 && type != LayerType.Input) throw new ArgumentException("Layer type of first layer cannot be non-input.");
+        if (identifier == 0 && type != LayerType.Input) throw new ArgumentException("Layer type of the first Layer cannot be non-input.");
         _type = type;
         _size = 0;
         _nodes = [];
@@ -33,14 +31,12 @@ public class Layer
         _size = size;
         _nodes = new Node[size];
         for (int i = 0; i < _nodes.Length; i++)
-            _nodes[i] = new Node((ushort)i, _identifier, (ushort)(_identifier == 0 ? 1 : previousLayerSize), activationType, _identifier == 0 ? [(ushort)i] : null);
+            _nodes[i] = new Node((ushort)(_type == LayerType.Input ? 1 : previousLayerSize), activationType, _type == LayerType.Input ? [(ushort)i] : null);
     }
     
     public ushort GetSize() => _size;
     
     public Node[] GetNodes() => _nodes;
-    
-    public ushort GetLayerIdentifier() => _identifier;
     
     public LayerType GetLayerType() => _type;
     
