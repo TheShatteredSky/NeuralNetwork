@@ -135,27 +135,7 @@ public class NetworkManager
     
     public static Network GenerateNetwork(Network original)
     {
-        Network network = new Network();
-        network.SetName(original.GetName());
-        network.Instantiate(original.GetLayerCount() - 2);
-        for (int l = 0; l < original.GetLayerCount(); l++)
-        {
-            Layer layer = new Layer((ushort)l, original[l].GetLayerType());
-            layer.InstantiateCustom(original[l].GetSize());
-            for (int n = 0; n < original[l].GetSize(); n++)
-            {
-                ushort[] parents = new ushort[original[l, n].GetParentCount()];
-                double[] weights = new double[original[l, n].GetDimensions()];
-                for (int p = 0; p < original[l, n].GetParentCount(); p++)
-                    parents[p] = original[l, n].GetParents()[p];
-                for (int w = 0; w < original[l, n].GetDimensions(); w++)
-                    weights[w] = original[l, n].GetWeights()[w];
-                Node node = new Node((ushort)n, (ushort)l, original[l, n].GetDimensions(), weights, original[l, n].GetBias(), original[l, n].GetActivation(), parents);
-                layer[n] = node;
-            }
-            network[l] = layer;
-        }
-        return network;
+        return original.Clone();
     }
     
     public void Optimize(int networkIndex, int datasetIndex, LossType lossFunction, double learningRate, uint epochs, OptimizerType optimizerType)
