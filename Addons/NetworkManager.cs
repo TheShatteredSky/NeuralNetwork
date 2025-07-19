@@ -212,7 +212,7 @@ public class NetworkManager
                     Parallel.For(0, coreCount, _ =>
                     {
                         Network network = GenerateNetwork(original);
-                        network.Randomize(range);
+                        network.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add((network, network.Loss(data.inputs, data.outputs, lossFunction)));
@@ -225,7 +225,7 @@ public class NetworkManager
                     for(int p = 0; p < coreCount; p++)
                     {
                         Network network = GenerateNetwork(original);
-                        network.Randomize(range);
+                        network.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add((network, network.Loss(data.inputs, data.outputs, lossFunction)));
@@ -263,7 +263,7 @@ public class NetworkManager
                     Parallel.For(0, coreCount, _ =>
                     {
                         Network network = GenerateNetwork(original);
-                        network.Randomize(range);
+                        network.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add(network);
@@ -276,7 +276,7 @@ public class NetworkManager
                     Parallel.For(0, coreCount, _ =>
                     {
                         Network network = GenerateNetwork(original);
-                        network.Randomize(range);
+                        network.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add(network);
@@ -315,7 +315,7 @@ public class NetworkManager
                     Parallel.For(0, coreCount, _ =>
                     {
                         Network network = GenerateNetwork(original);
-                        network.Randomize(range);
+                        network.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add(network.Loss(data.inputs, data.outputs, lossFunction));
@@ -328,7 +328,7 @@ public class NetworkManager
                     Parallel.For(0, coreCount, _ =>
                     {
                         Network network = GenerateNetwork(original);
-                        network.Randomize(range);
+                        network.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(network, lossFunction, learningRate);
                         optimizer.Optimize(data.inputs, data.outputs, epochs);
                         generations.Add(network.Loss(data.inputs, data.outputs, lossFunction));
