@@ -118,7 +118,6 @@ public static class NetworkUtilities
                 currentLine++;
             }
         }
-
         if (lines[currentLine + 1] != "#")
         {
             string[] inScales = lines[currentLine+1].Split(';'); 
@@ -143,7 +142,6 @@ public static class NetworkUtilities
             }
             network.SetOutputScaling(outputScales);
         }
-
         return network;
     }
     

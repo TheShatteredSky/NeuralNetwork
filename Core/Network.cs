@@ -87,6 +87,8 @@ public class Network
     /// Fetches the name of the Network.
     /// </summary>
     /// <returns>The name of the Network.</returns>
+    public void SetName(string newName) => _name = newName;
+
     public string GetName() => _name!;
     
     /// <summary>
@@ -389,7 +391,6 @@ public class Network
         sb.AppendLine($"Loss: {totalError}");
         return sb.ToString();
     }
-
     
     /// <summary>
     /// The formatted string of the Network.
