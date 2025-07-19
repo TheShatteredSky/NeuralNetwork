@@ -126,7 +126,7 @@ public sealed class AdamOptimizer : SGDOptimizer
             {
                 double decayRateOfFirstMomentReciprocal = 1 - _mutableDecayRateOfFirstMoment;
                 double decayRateOfSecondMomentReciprocal = 1 - _mutableDecayRateOfSecondMoment;
-                for (int weightIndex = 0; weightIndex < Network[layerIndex, nodeIndex].GetDimensions(); weightIndex++)
+                for (int weightIndex = 0; weightIndex < Network[layerIndex, nodeIndex].GetSize(); weightIndex++)
                 {
                     double correctedWeightFirstMoment = _weightFirstMoments[layerIndex][nodeIndex][weightIndex] / decayRateOfFirstMomentReciprocal;
                     double correctedWeightSecondMoment = _weightSecondMoments[layerIndex][nodeIndex][weightIndex] / decayRateOfSecondMomentReciprocal;
@@ -134,7 +134,7 @@ public sealed class AdamOptimizer : SGDOptimizer
                 }
                 double correctedBiasFirstMoment = _biasFirstMoments[layerIndex][nodeIndex] / decayRateOfFirstMomentReciprocal;
                 double correctedBiasSecondMoment = _biasSecondMoments[layerIndex][nodeIndex] / decayRateOfSecondMomentReciprocal;
-                Network[layerIndex, nodeIndex, Network[layerIndex, nodeIndex].GetDimensions()] -= LearningRate * correctedBiasFirstMoment / (Math.Sqrt(correctedBiasSecondMoment) + _epsilon);
+                Network[layerIndex, nodeIndex, Network[layerIndex, nodeIndex].GetSize()] -= LearningRate * correctedBiasFirstMoment / (Math.Sqrt(correctedBiasSecondMoment) + _epsilon);
             }
         }
         _mutableDecayRateOfFirstMoment *= _decayRateOfFirstMoment;

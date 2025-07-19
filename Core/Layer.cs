@@ -7,6 +7,12 @@ public class Layer
     private Node[] _nodes;
     private LayerType _type;
     
+    public Node this[int node]
+    {
+        get => _nodes[node];
+        set => _nodes[node] = value;
+    }
+    
     public Layer(ushort identifier, LayerType type)
     {
         _identifier = identifier;
@@ -85,6 +91,11 @@ public class Layer
         return softmaxOutputs;
     }
 
+    /// <summary>
+    /// The formatted string representing this Layer.
+    /// ⚠ This is a custom format, not JSON.
+    /// </summary>
+    /// <returns>A string representing this Layer.</returns>
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
@@ -92,11 +103,5 @@ public class Layer
         foreach (Node node in _nodes)
             sb.Append(node);
         return sb.ToString();
-    }
-
-    public Node this[int node]
-    {
-        get => _nodes[node];
-        set => _nodes[node] = value;
     }
 }

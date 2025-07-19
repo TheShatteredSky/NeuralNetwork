@@ -145,7 +145,7 @@ public static class NetworkUtilities
             arr[l] = new double[network[l].GetSize()][];
             for (int n = 0; n < network[l].GetSize(); n++)
             {
-                arr[l][n] = new double[network[l, n].GetDimensions()];
+                arr[l][n] = new double[network[l, n].GetSize()];
             }
         }
         return arr;
@@ -199,7 +199,7 @@ public static class NetworkUtilities
             for (int n = 0; n < network[l].GetSize(); n++)
             {
                 network[l, n].SetBias(settings[l][n].Item2);
-                for (int w = 0; w <network[l, n].GetDimensions(); w++)
+                for (int w = 0; w <network[l, n].GetSize(); w++)
                     network[l,n, w] = settings[l][n].Item1[w];
             }
         }

@@ -12,6 +12,41 @@ public class Network
     private (double shift, double scale, double deshift)[]? _outputScaling;
 
     /// <summary>
+    /// Indexer for this Network's Layers.
+    /// ⚠ This method returns a reference to the actual Layer this Network uses, modifying it will modify the that of Network too.
+    /// </summary>
+    /// <param name="layer">The index of the Layer.</param>
+    public Layer this[int layer]
+    {
+        get => _networkLayers[layer];
+        set => _networkLayers[layer] = value;
+    }
+    
+    /// <summary>
+    /// Indexer for this Network's Nodes.
+    /// ⚠ This method returns a reference to the actual Node this Network uses, modifying it will modify the that of Network too.
+    /// </summary>
+    /// <param name="layer">The index of the Layer.</param>
+    /// <param name="node">The index of the Node.</param>
+    public Node this[int layer, int node]
+    {
+        get => this[layer][node];
+        set => this[layer][node] = value;
+    }
+    
+    /// <summary>
+    /// Indexer for this Network's parameters.
+    /// </summary>
+    /// <param name="layer">The index of the Layer.</param>
+    /// <param name="node">The index of the Node.</param>
+    /// <param name="param">The index of the parameter, 0 to dimensions - 1 will return the specified weight, while dimensions will return the bias.</param>
+    public double this[int layer, int node, int param]
+    {
+        get => this[layer, node][param];
+        set => this[layer, node][param] = value;
+    }
+    
+    /// <summary>
     /// Completely empty constructor if needed.
     /// </summary>
     public Network()
@@ -26,7 +61,7 @@ public class Network
     /// <summary>
     /// Creates a new Network with the specified name.
     /// </summary>
-    /// <param name="name">The name of the Network.</param>
+    /// <param name="name">The name of this Network.</param>
     public Network(string name)
     {
         _name = name;
@@ -37,7 +72,7 @@ public class Network
     }
 
     /// <summary>
-    /// Creates the Layer array of the Network (although empty).
+    /// Creates the Layer array of this Network (although empty).
     /// </summary>
     /// <param name="hiddenLayers">The number of hidden Layers, the total number of Layers will be that +2.</param>
     public void Instantiate(int hiddenLayers)
@@ -47,7 +82,7 @@ public class Network
     }
 
     /// <summary>
-    /// Creates the Layer array of the Network and instantiates them.
+    /// Creates the Layer array of this Network and instantiates them.
     /// </summary>
     /// <param name="inputSize">The number of input Nodes.</param>
     /// <param name="inputActivation">The activation for the input Nodes.</param>
@@ -66,9 +101,9 @@ public class Network
     }
     
     /// <summary>
-    /// Fetches the name of the Network.
+    /// Fetches the name of this Network.
     /// </summary>
-    /// <returns>The name of the Network.</returns>
+    /// <returns>The name of this Network.</returns>
     public string GetName()
     {
         if (_name == null) throw new Exception("Network doesn't have a name.");
@@ -76,95 +111,60 @@ public class Network
     }
     
     /// <summary>
-    /// Sets the name of the Network.
+    /// Sets the name of this Network.
     /// </summary>
-    /// <param name="name">The new name of the Network</param>
+    /// <param name="name">The new name of this Network</param>
     public void SetName(string name) => _name = name;
     
     /// <summary>
-    /// Sets the input scaling of the Network.
+    /// Sets the input scaling of this Network.
     /// </summary>
     /// <param name="scales">The new input scales.</param>
     public void SetInputScaling((double, double, double)[] scales) => _inputScaling = scales;
     
     /// <summary>
-    /// Sets the output scaling of the Network.
+    /// Sets the output scaling of this Network.
     /// </summary>
     /// <param name="scales">The new output scales.</param>
     public void SetOutputScaling((double, double, double)[] scales) => _outputScaling = scales;
     
     /// <summary>
-    /// Fetches the Layer count of the Network.
+    /// Fetches the Layer count of this Network.
     /// </summary>
-    /// <returns>The number of layers in the network.</returns>
+    /// <returns>The number of layers in this Network.</returns>
     public ushort GetLayerCount() => _layerCount;
     
     /// <summary>
-    /// Fetches the Layer array of the Network.
-    /// ⚠ This returns a reference to the actual array the Network uses, modifying it will modify the that of Network too.
+    /// Fetches the Layer array of this Network.
+    /// ⚠ This method returns a reference to the actual array this Network uses, modifying it will modify the that of Network too.
     /// </summary>
-    /// <returns>The Layer array of the Network.
+    /// <returns>The Layer array of this Network.
     /// </returns>
     public Layer[] GetLayers() => _networkLayers;
 
     /// <summary>
-    /// Indexer for the Network's Layers.
-    /// ⚠ This returns a reference to the actual Layer the Network uses, modifying it will modify the that of Network too.
-    /// </summary>
-    /// <param name="layer">The index of the Layer.</param>
-    public Layer this[int layer]
-    {
-        get => _networkLayers[layer];
-        set => _networkLayers[layer] = value;
-    }
-    
-    /// <summary>
-    /// Indexer for the Network's Nodes.
-    /// ⚠ This returns a reference to the actual Node the Network uses, modifying it will modify the that of Network too.
-    /// </summary>
-    /// <param name="layer">The index of the Layer.</param>
-    /// <param name="node">The index of the Node.</param>
-    public Node this[int layer, int node]
-    {
-        get => this[layer][node];
-        set => this[layer][node] = value;
-    }
-    
-    /// <summary>
-    /// Indexer for the Network's parameters.
-    /// </summary>
-    /// <param name="layer">The index of the Layer.</param>
-    /// <param name="node">The index of the Node.</param>
-    /// <param name="param">The index of the parameter, 0 to dimensions - 1 will return the specified weight, while dimensions will return the bias.</param>
-    public double this[int layer, int node, int param]
-    {
-        get => this[layer, node][param];
-        set => this[layer, node][param] = value;
-    }
-
-    /// <summary>
-    /// Instantiates the input Layer of the Network.
+    /// Instantiates the input Layer of this Network.
     /// </summary>
     /// <param name="numberOfNodes">The number of Nodes in the input Layer.</param>
     /// <param name="activation">The activation for the input Nodes.</param>
     /// <exception cref="ArgumentException"></exception>
     public void InstantiateInputLayer(ushort numberOfNodes, ActivationType activation)
     {
-        if (activation == ActivationType.Softmax) throw new ArgumentException("Input layers cannot have a Softmax activation.");
+        if (activation == ActivationType.Softmax) throw new ArgumentException("Input Layers cannot have a Softmax activation.");
         Layer input = new Layer(0, LayerType.Input);
         input.Instantiate(numberOfNodes, 1, activation);
         _networkLayers[0] = input;
     }
     
     /// <summary>
-    /// Instantiates the hidden Layers of the Network.
+    /// Instantiates the hidden Layers of this Network.
     /// </summary>
     /// <param name="numberOfNodes">The number of Nodes in each hidden Layer.</param>
     /// <param name="activation">The activation for the hidden Nodes.</param>
     /// <exception cref="ArgumentException"></exception>
     public void InstantiateHiddenLayers(ushort numberOfNodes, ActivationType activation)
     {
-        if (activation == ActivationType.Softmax) throw new ArgumentException("Hidden layers cannot have a Softmax activation.");
+        if (activation == ActivationType.Softmax) throw new ArgumentException("Hidden Layers cannot have a Softmax activation.");
         Layer afterInputLayer = new Layer(1, LayerType.Hidden);
         afterInputLayer.Instantiate(numberOfNodes, _networkLayers[0].GetSize(), activation);
         _networkLayers[1] = afterInputLayer;
@@ -177,7 +177,7 @@ public class Network
     }
 
     /// <summary>
-    /// Instantiates the output Layer of the Network.
+    /// Instantiates the output Layer of this Network.
     /// </summary>
     /// <param name="numberOfNodes">The number of Nodes in the output Layer.</param>
     /// <param name="activation">The activation for the output Nodes.</param>
@@ -274,10 +274,10 @@ public class Network
     }
     
     /// <summary>
-    /// Base process method for the Network.
+    /// Base process method for this Network.
     /// </summary>
     /// <param name="inputs">The data to process.</param>
-    /// <returns>The predictions of the Network for each data instance.</returns>
+    /// <returns>The predictions of this Network for each data instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     //TODO: Implemented parallel processing for this method. Will need to check that no issues arise.
     public double[][] Process(double[][] inputs)
@@ -285,7 +285,7 @@ public class Network
         ConcurrentBag<double[]> outputs = new ConcurrentBag<double[]>();
         Parallel.For(0, inputs.Length, i =>
         {
-            if (inputs[i].Length != this[0].GetSize()) throw new ArgumentException($"Number of inputs does not match the size of the input layer. (Sample #{i})");
+            if (inputs[i].Length != this[0].GetSize()) throw new ArgumentException($"Number of inputs does not match the size of the input Layer. (Sample #{i})");
             outputs.Add(ProcessSingle(inputs[i]));
         });
         return outputs.ToArray();
@@ -295,11 +295,11 @@ public class Network
     /// Processes a single instance of data.
     /// </summary>
     /// <param name="inputs">The data to process.</param>
-    /// <returns>The predictions of the Network.</returns>
+    /// <returns>The predictions of this Network.</returns>
     /// <exception cref="ArgumentException"></exception>
     internal double[] ProcessSingle(double[] inputs)
     {
-        if (inputs.Length != this[0].GetSize()) throw new ArgumentException("Number of inputs does not match the size of the input layer.");
+        if (inputs.Length != this[0].GetSize()) throw new ArgumentException("Number of inputs does not match the size of the input Layer.");
         double[] current = UnscaledInputs(inputs);
         foreach (var layer in _networkLayers)
             current = layer.Process(current);
@@ -307,19 +307,19 @@ public class Network
     }
 
     /// <summary>
-    /// Computes the loss of the Network.
+    /// Computes the loss of this Network.
     /// </summary>
     /// <param name="inputs">The inputs of data.</param>
     /// <param name="outputs">The outputs of data.</param>
     /// <param name="lossType">The loss function.</param>
-    /// <returns>The loss value of the Network on the specified data.</returns>
+    /// <returns>The loss value of this Network on the specified data.</returns>
     /// <exception cref="ArgumentException"></exception>
     public double Loss(double[][] inputs, double[][] outputs, LossType lossType)
     {
         double totalError = 0;
         for (int i = 0; i < inputs.Length; i++)
         {
-            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
+            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
             double[] scaledPredictions = ProcessSingle(inputs[i]);
             double[] unscaledPredictions = UnscaledOutputs(scaledPredictions);
             double[] unscaledOutputs = UnscaledOutputs(outputs[i]);
@@ -347,7 +347,7 @@ public class Network
     }
     
     /// <summary>
-    /// Computes the loss of the Network with insights on the predictions.
+    /// Computes the loss of this Network with insights on the predictions.
     /// </summary>
     /// <param name="inputs">The inputs of data.</param>
     /// <param name="outputs">The outputs of data.</param>
@@ -360,7 +360,7 @@ public class Network
         double totalError = 0;
         for (int i = 0; i < inputs.Length; i++)
         {
-            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this network generates. (Sample #{i})");
+            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
             double currError = 0;
             double[] scaledPredictions = ProcessSingle(inputs[i]);
             double[] unscaledPredictions = UnscaledOutputs(scaledPredictions);
@@ -391,10 +391,10 @@ public class Network
     }
     
     /// <summary>
-    /// The formatted string of the Network.
+    /// The formatted string representing this Network.
     /// ⚠ This is a custom format, not JSON.
     /// </summary>
-    /// <returns>A string representing the network.</returns>
+    /// <returns>A string representing this Network.</returns>
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
@@ -412,7 +412,7 @@ public class Network
     }
 
     /// <summary>
-    /// Randomizes all parameters of the Network in the specified range.
+    /// Randomizes all parameters of this Network in the specified range.
     /// </summary>
     /// <param name="min">The minimum of the range.</param>
     /// <param name ="max">The maximum of the range.</param>
@@ -420,14 +420,14 @@ public class Network
     {
         foreach (var layer in _networkLayers)
             foreach (var node in layer.GetNodes())
-                for (int i = 0; i <= node.GetDimensions(); i++)
+                for (int i = 0; i <= node.GetSize(); i++)
                     node[i] = NetworkUtilities.NextDouble(min, max);
     }
 
     /// <summary>
-    /// Clones the Network.
+    /// Clones this Network.
     /// </summary>
-    /// <returns>A copy of the Network.</returns>
+    /// <returns>A copy of this Network.</returns>
     //TODO: Check this actually works.
     public Network Clone()
     {
@@ -441,11 +441,11 @@ public class Network
             for (int n = 0; n < this[l].GetSize(); n++)
             {
                 ushort[]? parents = this[l, n].GetParents() == null ? null : new ushort[this[l, n].GetParentCount()];
-                double[] weights = new double[this[l, n].GetDimensions()];
+                double[] weights = new double[this[l, n].GetSize()];
                 if (parents != null) 
                     for (int p = 0; p < this[l, n].GetParentCount(); p++)
                         parents[p] = this[l, n].GetParents()![p];
-                for (int w = 0; w < this[l, n].GetDimensions(); w++)
+                for (int w = 0; w < this[l, n].GetSize(); w++)
                     weights[w] = this[l, n].GetWeights()[w];
                 network[l, n].SetParents(parents);
                 network[l, n].SetWeights(weights);
