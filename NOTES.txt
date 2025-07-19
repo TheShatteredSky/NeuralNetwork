@@ -1,1 +1,0 @@
-//TODO: Every time I create weight and biases arrays, I can fuse them into one array? Need to check if this is feasibly/useful.

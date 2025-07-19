@@ -1,12 +1,6 @@
 namespace NeuralNetwork;
   
-public enum LossType
-{
-    BinaryCrossEntropy, 
-    CategoricalCrossEntropy,
-    MSE
-}
-    
+  
 public enum ActivationType
 {
     RElu,
@@ -21,6 +15,20 @@ public enum ActivationType
     NOR,
     EX,
     NEX
+}
+
+public enum LayerType
+{
+    Input,
+    Hidden,
+    Output,
+}
+
+public enum LossType
+{
+    BinaryCrossEntropy, 
+    CategoricalCrossEntropy,
+    MSE
 }
 
 public enum OptimizerType

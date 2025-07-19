@@ -6,14 +6,7 @@ public class Layer
     private ushort _size;
     private Node[] _nodes;
     private LayerType _type;
-
-    public enum LayerType
-    {
-        Input,
-        Hidden,
-        Output,
-    }
-        
+    
     public Layer(ushort identifier, LayerType type)
     {
         _identifier = identifier;
