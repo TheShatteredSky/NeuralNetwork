@@ -106,12 +106,11 @@ public class SGDOptimizer : IOptimizer
                                     delta += downstreamNode.GetWeights()[parentIndex] * nextLayerDeltas[n];
                         }
                     }
-
                     delta *= activationRecord.ActivationDerivative;
                 }
                 currentLayerDeltas[nodeIndex] = delta;
 
-                for (int weightIndex = 0; weightIndex < currentNode.GetDimensions(); weightIndex++)
+                for (int weightIndex = 0; weightIndex < currentNode.GetSize(); weightIndex++)
                     weightGradientsPerLayer[layerIndex][nodeIndex][weightIndex] +=
                         delta * activationRecord.InputValues[weightIndex];
                 biasGradientsPerLayer[layerIndex][nodeIndex] += delta;
@@ -224,9 +223,9 @@ public class SGDOptimizer : IOptimizer
         {
             for (int nodeIndex = 0; nodeIndex < network[layerIndex].GetSize(); nodeIndex++)
             {
-                for (int weightIndex = 0; weightIndex < network[layerIndex, nodeIndex].GetDimensions(); weightIndex++)
+                for (int weightIndex = 0; weightIndex < network[layerIndex, nodeIndex].GetSize(); weightIndex++)
                     network[layerIndex, nodeIndex, weightIndex] -= learningRate * totalWeightGradients[layerIndex][nodeIndex][weightIndex] / sampleCount;
-                network[layerIndex, nodeIndex, network[layerIndex, nodeIndex].GetDimensions()] -= learningRate * totalBiasGradients[layerIndex][nodeIndex] / sampleCount;
+                network[layerIndex, nodeIndex, network[layerIndex, nodeIndex].GetSize()] -= learningRate * totalBiasGradients[layerIndex][nodeIndex] / sampleCount;
             }
         }
     }
