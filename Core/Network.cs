@@ -429,7 +429,7 @@ public class Network
         sb.AppendLine("#SCALES");
         if (_inputScaling == null) sb.AppendLine("#");
         else for (int i = 0; i < _inputScaling.Length; i++)
-            sb.AppendLine(_inputScaling[i].shift + "," + _inputScaling[i].scale + "," + _inputScaling[i].deshift + (i == _inputScaling.Length - 1 ? "" : ";"));
+            sb.Append(_inputScaling[i].shift + "," + _inputScaling[i].scale + "," + _inputScaling[i].deshift + (i == _inputScaling.Length - 1 ? "" : ";"));
         if (_outputScaling == null) sb.AppendLine("#");
         else for (int i = 0; i < _outputScaling.Length; i++)
             sb.Append(_outputScaling[i].shift + "," + _outputScaling[i].scale + "," + _outputScaling[i].deshift + (i == _outputScaling.Length - 1 ? "" : ";"));
