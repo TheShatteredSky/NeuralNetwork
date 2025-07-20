@@ -14,10 +14,10 @@ public sealed class AdamOptimizer : SGDOptimizer
     
     public AdamOptimizer(Network network, LossType lossFunction, double baseLearningRate) : base (network, lossFunction, baseLearningRate)
     {
-        _weightFirstMoments = NetworkUtilities.InstantiateWeightArray(network);
-        _biasFirstMoments = NetworkUtilities.InstantiateBiasArray(network);
-        _weightSecondMoments = NetworkUtilities.InstantiateWeightArray(network);
-        _biasSecondMoments = NetworkUtilities.InstantiateBiasArray(network);
+        _weightFirstMoments = Utilities.InstantiateWeightArray(network);
+        _biasFirstMoments = Utilities.InstantiateBiasArray(network);
+        _weightSecondMoments = Utilities.InstantiateWeightArray(network);
+        _biasSecondMoments = Utilities.InstantiateBiasArray(network);
         _mutableDecayRateOfFirstMoment = _decayRateOfFirstMoment;
         _mutableDecayRateOfSecondMoment = _decayRateOfSecondMoment;
     }
@@ -27,8 +27,8 @@ public sealed class AdamOptimizer : SGDOptimizer
         (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
         inputs = unscaled.unscaledInputs;
         outputs = unscaled.unscaledOutputs;
-        double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(Network);
-        double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(Network);
+        double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
+        double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
             ExecuteEpoch(inputs, outputs, weightGradientsForBatch, biasGradientsForBatch);
@@ -43,8 +43,8 @@ public sealed class AdamOptimizer : SGDOptimizer
         outputs = unscaled.unscaledOutputs;
         List<double> tracker = new List<double>();
         tracker.Add(Network.Loss(inputs, outputs, LossType));
-        double[][][] weightGradientsForBatch = NetworkUtilities.InstantiateWeightArray(Network);
-        double[][] biasGradientsForBatch = NetworkUtilities.InstantiateBiasArray(Network);
+        double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
+        double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
             ExecuteEpoch(inputs, outputs, weightGradientsForBatch, biasGradientsForBatch);
@@ -64,12 +64,12 @@ public sealed class AdamOptimizer : SGDOptimizer
         int batches = (sampleCount + batchSize - 1) / batchSize;
         for (int batchIndex = 0; batchIndex < batches; batchIndex++)
         {
-            NetworkUtilities.ClearWeightArray(weightGradientsForBatch);
-            NetworkUtilities.ClearBiasArray(biasGradientsForBatch);
+            Utilities.ClearWeightArray(weightGradientsForBatch);
+            Utilities.ClearBiasArray(biasGradientsForBatch);
             for (int sampleIndex = batchIndex * batchSize; sampleIndex < sampleCount && sampleIndex < batchIndex * batchSize + batchSize; sampleIndex++)
             {
-                double[][][] weightGradientsPerLayer = NetworkUtilities.InstantiateWeightArray(Network);
-                double[][] biasGradientsPerLayer = NetworkUtilities.InstantiateBiasArray(Network);
+                double[][][] weightGradientsPerLayer = Utilities.InstantiateWeightArray(Network);
+                double[][] biasGradientsPerLayer = Utilities.InstantiateBiasArray(Network);
                 NodeActivationRecord[][] forwardPassRecords = new NodeActivationRecord[Network.GetLayerCount()][];
                 double[] layerInputs = new double[inputs[sampleIndex].Length];
                 for (int i = 0; i < inputs[sampleIndex].Length; i++)
