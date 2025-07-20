@@ -34,10 +34,8 @@ public static class Utilities
             for (int j = 0; j < cols; j++)
             {
                 double range = max[j] - min[j];
-                if (range == 0)
-                    data[i][j] = 0;
-                else
-                    data[i][j] = (data[i][j] - min[j]) / range;
+                if (range == 0) data[i][j] = 0;
+                else data[i][j] = (data[i][j] - min[j]) / range;
             }
         }
     }
