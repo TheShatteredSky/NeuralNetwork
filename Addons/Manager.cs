@@ -28,6 +28,7 @@ public class Manager
     public void StartLogging(string logPath)
     {
         _log = true;
+        WriteAllNetworks();
         _logPath = logPath;
     }
 
@@ -38,9 +39,15 @@ public class Manager
     public void StartLogging()
     {
         if (_logPath == "") throw new Exception("LogPath not set");
+        WriteAllNetworks();
         _log = true;
     }
-    
+
+    private void WriteAllNetworks()
+    {
+        foreach (Network network in _networks)
+            File.AppendAllTextAsync(_logPath, network.ToString());
+    }
     /// <summary>
     /// Stops this Manager's logging.
     /// </summary>
@@ -59,6 +66,7 @@ public class Manager
     public void AddNetwork(Network network)
     {
         _networks.Add(network);
+        if (_log) File.AppendAllTextAsync(_logPath, network.ToString());
     }
 
     /// <summary>
@@ -261,7 +269,7 @@ public class Manager
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         Dataset data = _datasets[GetDatasetIndexFromName(datasetName)];
-        return FindBest(original, data, lossFunction, learningRate, range, epochs, attempts, optimizerType);
+        return FindBestInternal(original, data, lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
     
     /// <summary>
@@ -315,6 +323,46 @@ public class Manager
         return generations.ToArray().OrderBy(x => x.Item2).First().Item1;
     }
     
+    internal Network FindBestInternal(Network network, Dataset data, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
+    {
+        ConcurrentBag<(Network, double)> generations = new();
+        int coreCount = Environment.ProcessorCount;
+        int cuts = (int)attempts / coreCount;
+        generations.Add((network, network.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+        switch (optimizerType)
+        {
+            case OptimizerType.SGD:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, id =>
+                    {
+                        Network attempt = GenerateNetwork(network);
+                        attempt.Randomize(-range, range);
+                        SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
+                        optimizer.Optimize(data, epochs);
+                        if (_log) File.AppendAllTextAsync(_logPath, $"FindBest Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction) + "\n");
+                        generations.Add((attempt, attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+                    });
+                }
+                break;
+            case OptimizerType.Adam:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, id =>
+                    {
+                        Network attempt = GenerateNetwork(network);
+                        attempt.Randomize(-range, range);
+                        AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
+                        optimizer.Optimize(data, epochs);
+                        if (_log) File.AppendAllTextAsync(_logPath, $"FindBest Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction) + "\n");
+                        generations.Add((attempt, attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+                    });
+                }
+                break;
+        }
+        return generations.ToArray().OrderBy(x => x.Item2).First().Item1;
+    }
+    
     /// <summary>
     /// Generates and optimizes alternates of the Network with the specified name using the Dataset with the specified name.
     /// </summary>
@@ -331,7 +379,7 @@ public class Manager
     {
         Network original = _networks[GetNetworkIndexFromName(networkName)];
         Dataset data = _datasets[GetDatasetIndexFromName(datasetName)];
-        return GenerateAndOptimizerAlternates(original, data, lossFunction, learningRate, range, epochs, attempts, optimizerType);
+        return GenerateAndOptimizeAlternatesInternal(original, data, lossFunction, learningRate, range, epochs, attempts, optimizerType);
     }
     
     /// <summary>
@@ -346,7 +394,7 @@ public class Manager
     /// <param name="attempts">The number of generation attempts.</param>
     /// <param name="optimizerType">The type of Optimizer to use.</param>
     /// <returns>The optimized alternates of the specified Network.</returns>
-    public static Network[] GenerateAndOptimizerAlternates(Network network, Dataset data, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
+    public static Network[] GenerateAndOptimizeAlternates(Network network, Dataset data, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
     {
         ConcurrentBag<Network> generations = new();
         int coreCount = Environment.ProcessorCount;
@@ -375,6 +423,45 @@ public class Manager
                         attempt.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
+                        generations.Add(attempt);
+                    });
+                }
+                break;
+        }
+        return generations.ToArray();
+    }
+    
+    internal Network[] GenerateAndOptimizeAlternatesInternal(Network network, Dataset data, LossType lossFunction, double learningRate, uint range, uint epochs, uint attempts, OptimizerType optimizerType)
+    {
+        ConcurrentBag<Network> generations = new();
+        int coreCount = Environment.ProcessorCount;
+        int cuts = (int)attempts / coreCount;
+        switch (optimizerType)
+        {
+            case OptimizerType.SGD:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, id =>
+                    {
+                        Network attempt = GenerateNetwork(network);
+                        attempt.Randomize(-range, range);
+                        SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
+                        optimizer.Optimize(data, epochs);
+                        if (_log) File.AppendAllTextAsync(_logPath, $"GenerateAndOptimizeAlternates Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction) + "\n");
+                        generations.Add(attempt);
+                    });
+                }
+                break;
+            case OptimizerType.Adam:
+                for (int i = 0; i < cuts; i++)
+                {
+                    Parallel.For(0, coreCount, id =>
+                    {
+                        Network attempt = GenerateNetwork(network);
+                        attempt.Randomize(-range, range);
+                        AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
+                        optimizer.Optimize(data, epochs);
+                        if (_log) File.AppendAllTextAsync(_logPath, $"GenerateAndOptimizeAlternates Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction) + "\n");
                         generations.Add(attempt);
                     });
                 }
