@@ -3,7 +3,7 @@ namespace NeuralNetwork.Addons;
 /// <summary>
 /// A collection of utility functions.
 /// </summary>
-public static class NetworkUtilities
+public static class Utilities
 {
     /// <summary>
     /// Normalizes the given data to a range of 0 to 1.
