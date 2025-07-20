@@ -43,11 +43,15 @@ public class Manager
         _log = true;
     }
 
+    /// <summary>
+    /// Writes all the current Networks in this Manager to its log file.
+    /// </summary>
     private void WriteAllNetworks()
     {
         foreach (Network network in _networks)
             File.AppendAllTextAsync(_logPath, network.ToString());
     }
+    
     /// <summary>
     /// Stops this Manager's logging.
     /// </summary>
