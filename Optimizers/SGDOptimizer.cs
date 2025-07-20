@@ -201,7 +201,7 @@ public class SGDOptimizer : IOptimizer
                 break;
             //TODO: Other derivatives
         }
-        return new NodeActivationRecord { InputValues = layer.NodeInputs(inputs, n), WeightedSum = weightedSums[n], ActivationOutput = activationOutput, ActivationDerivative = activationDerivative };
+        return new NodeActivationRecord { InputValues = layer[n].NodeInputs(inputs), WeightedSum = weightedSums[n], ActivationOutput = activationOutput, ActivationDerivative = activationDerivative };
     }
     
     protected void AccumulateGradients(double[][][] weightAccumulator, double[][] biasAccumulator, double[][][] weights, double[][] biases, Network network)
