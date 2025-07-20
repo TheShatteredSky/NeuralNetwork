@@ -75,6 +75,7 @@ public class Layer
     
     /// <summary>
     /// Fetches this Layer's Node array.
+    /// ⚠ This method returns a reference to the actual Node array this Layer uses, modifying it will modify the that of this Layer too.
     /// </summary>
     /// <returns>The Node array of this Layer.</returns>
     public Node[] GetNodes() => _nodes;

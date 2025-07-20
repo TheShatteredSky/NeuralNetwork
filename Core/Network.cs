@@ -13,7 +13,7 @@ public class Network
 
     /// <summary>
     /// Indexer for this Network's Layers.
-    /// ⚠ This method returns a reference to the actual Layer this Network uses, modifying it will modify the that of Network too.
+    /// ⚠ This method returns a reference to the actual Layer this Network uses, modifying it will modify the that of this Network too.
     /// </summary>
     /// <param name="layerIndex">The index of the Layer.</param>
     public Layer this[int layerIndex]
@@ -24,7 +24,7 @@ public class Network
     
     /// <summary>
     /// Indexer for this Network's Nodes.
-    /// ⚠ This method returns a reference to the actual Node this Network uses, modifying it will modify the that of Network too.
+    /// ⚠ This method returns a reference to the actual Node this Network uses, modifying it will modify the that of this Network too.
     /// </summary>
     /// <param name="layerIndex">The index of the Layer.</param>
     /// <param name="nodeIndex">The index of the Node.</param>

@@ -143,6 +143,7 @@ public class Node
    
    /// <summary>
    /// Fetches the weights of this Node.
+   /// ⚠ This method returns a reference to the actual weight array this Node uses, modifying it will modify the that of this Node too.
    /// </summary>
    /// <returns>This Node's weights.</returns>
    public double[] GetWeights() => _weights;
@@ -161,6 +162,7 @@ public class Node
    
    /// <summary>
    /// Fetches the parents of this Node.
+   /// ⚠ This method returns a reference to the actual parent array this Node uses, modifying it will modify the that of this Node too.
    /// </summary>
    /// <returns>This Node's parents.</returns>
    public ushort[]? GetParents() => _parents;
