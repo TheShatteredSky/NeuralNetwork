@@ -90,8 +90,8 @@ public static class NetworkUtilities
             LayerType layerType = Enum.Parse<LayerType>(layerHeader[0]);
             ushort layerSize = ushort.Parse(layerHeader[1]);
             currentLine++;
-            Layer layer = new Layer((ushort)layerIdx, layerType);
-            layer.InstantiateCustom(layerSize);
+            Layer layer = new Layer(layerType);
+            layer.Instantiate(layerSize);
             network[layerIdx] = layer;
             for (int nodeIndex = 0; nodeIndex < layerSize; nodeIndex++)
             {
@@ -217,5 +217,14 @@ public static class NetworkUtilities
             outputs[i] = parts[1].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
         }
         return (inputs, outputs);
+    }
+
+    //Frankly I don't understand why there's no built in method for this. Do not use this on Object arrays.
+    internal static T[] CopyNonObjectArray<T>(T[] original)
+    {
+        T[] result = new T[original.Length];
+        for (int i = 0; i < original.Length; i++)
+            result[i] = original[i];
+        return result;
     }
 }
