@@ -64,11 +64,11 @@ public class Node
            {
                case ActivationType.RElu:
                    double std = Math.Sqrt(2.0 / dimensions);
-                   _weights[i] = Utilities.NextDouble(-std, std);
+                   _weights[i] = Utilities.RandomDouble(-std, std);
                    break;
                case ActivationType.Sigmoid:
                    double range = Math.Sqrt(6.0 / (dimensions + 1));
-                   _weights[i] = Utilities.NextDouble(-range, range);
+                   _weights[i] = Utilities.RandomDouble(-range, range);
                    break;
                default:
                    _weights[i] = 1;

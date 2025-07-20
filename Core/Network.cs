@@ -437,7 +437,7 @@ public class Network
         foreach (var layer in _networkLayers)
             foreach (var node in layer.GetNodes())
                 for (int i = 0; i <= node.GetSize(); i++)
-                    node[i] = Utilities.NextDouble(min, max);
+                    node[i] = Utilities.RandomDouble(min, max);
     }
 
     /// <summary>
