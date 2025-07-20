@@ -56,25 +56,10 @@ public class Node
    {
        _dimensions = dimensions;
        _weights = new double[dimensions];
-       for (int i = 0; i < _weights.Length; i++)
-       {
-           switch (_activation)
-           {
-               case ActivationType.RElu:
-                   double std = Math.Sqrt(2.0 / dimensions);
-                   _weights[i] = Utilities.RandomDouble(-std, std);
-                   break;
-               case ActivationType.Sigmoid:
-                   double range = Math.Sqrt(6.0 / (dimensions + 1));
-                   _weights[i] = Utilities.RandomDouble(-range, range);
-                   break;
-               default:
-                   _weights[i] = 1;
-                   break;
-           }
-       }
-       _bias = 0;
        _activation = activation;
+       for (int i = 0; i < _weights.Length; i++)
+           _weights[i] = 1;
+       _bias = 0;
        if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
        _parents = parents == null ? null : Utilities.CopyNonObjectArray(parents);
    }
