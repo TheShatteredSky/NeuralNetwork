@@ -120,13 +120,13 @@ public class Network
     /// Sets the input scaling of this Network.
     /// </summary>
     /// <param name="scales">The new input scales.</param>
-    public void SetInputScaling((double, double, double)[]? scales) => _inputScaling = scales == null ? null : NetworkUtilities.CopyNonObjectArray(scales);
+    public void SetInputScaling((double, double, double)[]? scales) => _inputScaling = scales == null ? null : Utilities.CopyNonObjectArray(scales);
     
     /// <summary>
     /// Sets the output scaling of this Network.
     /// </summary>
     /// <param name="scales">The new output scales.</param>
-    public void SetOutputScaling((double, double, double)[]? scales) => _outputScaling = scales == null ? null : NetworkUtilities.CopyNonObjectArray(scales);
+    public void SetOutputScaling((double, double, double)[]? scales) => _outputScaling = scales == null ? null : Utilities.CopyNonObjectArray(scales);
     
     /// <summary>
     /// Fetches the Layer count of this Network.
@@ -227,7 +227,7 @@ public class Network
     /// <returns>The unscaled inputs.</returns>
     public double[] UnscaledInputs(double[] inputs)
     {
-        inputs = NetworkUtilities.CopyNonObjectArray(inputs);
+        inputs = Utilities.CopyNonObjectArray(inputs);
         if (_inputScaling == null) return inputs;
         for (int i = 0; i < inputs.Length; i++)
             inputs[i] = (inputs[i] + _inputScaling[i].shift)  * _inputScaling[i].scale + _inputScaling[i].deshift;
@@ -241,7 +241,7 @@ public class Network
     /// <returns>The scaled inputs.</returns>
     public double[] ScaledInputs(double[] inputs)
     {
-        inputs = NetworkUtilities.CopyNonObjectArray(inputs);
+        inputs = Utilities.CopyNonObjectArray(inputs);
         if (_inputScaling == null) return inputs;
         for (int i = 0; i < inputs.Length; i++)
             inputs[i] = (inputs[i] - _inputScaling[i].deshift) / _inputScaling[i].scale - _inputScaling[i].shift;
@@ -255,7 +255,7 @@ public class Network
     /// <returns>The unscaled outputs.</returns>
     public double[] UnscaledOutputs(double[] outputs)
     {
-        outputs = NetworkUtilities.CopyNonObjectArray(outputs);
+        outputs = Utilities.CopyNonObjectArray(outputs);
         if (_outputScaling == null) return outputs;
         for (int i = 0; i < outputs.Length; i++)
             outputs[i] = (outputs[i] + _outputScaling[i].shift)  * _outputScaling[i].scale + _outputScaling[i].deshift;
@@ -269,7 +269,7 @@ public class Network
     /// <returns>The scaled outputs.</returns>
     public double[] ScaledOutputs(double[] outputs)
     {
-        outputs = NetworkUtilities.CopyNonObjectArray(outputs);
+        outputs = Utilities.CopyNonObjectArray(outputs);
         if (_outputScaling == null) return outputs;
         for (int i = 0; i < outputs.Length; i++)
             outputs[i] = (outputs[i] - _outputScaling[i].deshift) / _outputScaling[i].scale - _outputScaling[i].shift;
@@ -284,7 +284,7 @@ public class Network
     /// <exception cref="ArgumentException"></exception>
     //TODO: Implemented parallel processing for this method. Will need to check that no issues arise.
     //UPDATE: There was a fucking issue, and it took me 2 hours to realize this caused it.
-    //Reverted this shit since I'm too pissed to fix it correctly
+    //Reverted this shit since I'm too pissed to fix it correctly.
     public double[][] Process(double[][] inputs)
     {
         double[][] outputs = new double[inputs.Length][];
@@ -392,11 +392,12 @@ public class Network
             for (int k = 0; k < inputs[i].Length; k++)
                 sb.Append(inputs[i][k].ToString("F6", CultureInfo.InvariantCulture) + ";");
             sb.Append(" Predicted: ");
-            for (int k = 0; k < scaledPredictions.Length; k++)
-                sb.Append(scaledPredictions[k].ToString("F6", CultureInfo.InvariantCulture) + ";");
+            foreach (var scaledPrediction in scaledPredictions)
+                sb.Append(scaledPrediction.ToString("F6", CultureInfo.InvariantCulture) + ";");
             sb.Append(" Expected: ");
-            for (int k = 0; k < scaledOutputs.Length; k++)
-                sb.Append(scaledOutputs[k].ToString("F6", CultureInfo.InvariantCulture) + ";");
+            foreach (var scaledOutput in scaledOutputs)
+                sb.Append(scaledOutput.ToString("F6", CultureInfo.InvariantCulture) + ";");
+
             sb.AppendLine($" Loss: {currError.ToString("F6", CultureInfo.InvariantCulture)} Total: {totalError.ToString("F6", CultureInfo.InvariantCulture)}");
             
         }
@@ -436,7 +437,7 @@ public class Network
         foreach (var layer in _networkLayers)
             foreach (var node in layer.GetNodes())
                 for (int i = 0; i <= node.GetSize(); i++)
-                    node[i] = NetworkUtilities.NextDouble(min, max);
+                    node[i] = Utilities.NextDouble(min, max);
     }
 
     /// <summary>
