@@ -61,8 +61,7 @@ public sealed class AdamOptimizer : SGDOptimizer
         (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(data.GetInputs(), data.GetOutputs());
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
-        List<double> tracker = new List<double>();
-        tracker.Add(Network.Loss(inputs, outputs, LossType));
+        List<double> tracker = [Network.Loss(inputs, outputs, LossType)];
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
         double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
