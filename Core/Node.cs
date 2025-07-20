@@ -41,10 +41,10 @@ public class Node
        if (dimensions != weights.Length) throw new ArgumentException("The number of dimensions does not match the number of weights.");
        _dimensions = dimensions;
        _activation = activation;
-       _weights = NetworkUtilities.CopyNonObjectArray(weights);
+       _weights = Utilities.CopyNonObjectArray(weights);
        _bias = bias;
        if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
-       _parents = parents == null ? null : NetworkUtilities.CopyNonObjectArray(parents);
+       _parents = parents == null ? null : Utilities.CopyNonObjectArray(parents);
    }
    
    /// <summary>
@@ -64,11 +64,11 @@ public class Node
            {
                case ActivationType.RElu:
                    double std = Math.Sqrt(2.0 / dimensions);
-                   _weights[i] = NetworkUtilities.NextDouble(-std, std);
+                   _weights[i] = Utilities.NextDouble(-std, std);
                    break;
                case ActivationType.Sigmoid:
                    double range = Math.Sqrt(6.0 / (dimensions + 1));
-                   _weights[i] = NetworkUtilities.NextDouble(-range, range);
+                   _weights[i] = Utilities.NextDouble(-range, range);
                    break;
                default:
                    _weights[i] = 1;
@@ -78,7 +78,7 @@ public class Node
        _bias = 0;
        _activation = activation;
        if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
-       _parents = parents == null ? null : NetworkUtilities.CopyNonObjectArray(parents);
+       _parents = parents == null ? null : Utilities.CopyNonObjectArray(parents);
    }
    
    /// <summary>
@@ -101,7 +101,7 @@ public class Node
    public void SetWeights(double[] weights)
    { 
        if (weights.Length != _dimensions) throw new ArgumentException("The given weight array is greater in size than the current, set a new size beforehand.");
-       _weights = NetworkUtilities.CopyNonObjectArray(weights);
+       _weights = Utilities.CopyNonObjectArray(weights);
    }
    
    /// <summary>
@@ -124,7 +124,7 @@ public class Node
    public void SetParents(ushort[]? parents)
    {
        if (parents != null && parents.Length > _dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
-       _parents = parents == null ? null : NetworkUtilities.CopyNonObjectArray(parents);
+       _parents = parents == null ? null : Utilities.CopyNonObjectArray(parents);
    } 
    
    /// <summary>
@@ -174,7 +174,7 @@ public class Node
    /// <returns>The filtered input array.</returns>
    internal double[] NodeInputs(double[] inputs)
    {
-       double[] copy = NetworkUtilities.CopyNonObjectArray(inputs);
+       double[] copy = Utilities.CopyNonObjectArray(inputs);
        return _parents == null ? copy : _parents.Select(x => copy[x]).ToArray();
    }
    
