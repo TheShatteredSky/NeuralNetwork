@@ -5,9 +5,11 @@ namespace NeuralNetwork.Addons;
 /// </summary>
 public static class Utilities
 {
+    private static ThreadLocal<Random> _threadRandom = new (() => new Random(BitConverter.ToInt32(Guid.NewGuid().ToByteArray(), 0)));
+    
     /// <summary>
     /// Normalizes the given data to a range of 0 to 1.
-    /// Decrepit method, favorize using the scalers.
+    /// Decrepit method, favorize using the built-in scalers.
     /// </summary>
     /// <param name="data">The data to normalize.</param>
     public static void NormalizeData(double[][] data)
@@ -41,13 +43,13 @@ public static class Utilities
     }
 
     /// <summary>
-    /// The shifts, scales and de-shifts needed to UNSCALE data down to a specified range.
+    /// The shifts, scales and de-shifts needed to UNSCALE data into a specified inner range.
     /// </summary>
     /// <param name="data">The data for which the scales are needed.</param>
     /// <param name="tMin">The desired minimum of the range.</param>
     /// <param name="tMax">The desired maximum of the range.</param>
     /// <returns>The shift, scale and de-shift for each column of data.</returns>
-    //TODO: I have no idea if a better way to unscale/scale data exists, this is the way I found but frankly seems inefficient.
+    //TODO: I have no idea if a better way to unscale/scale data exists, this is the way I found but it frankly seems inefficient.
     public static (double shift, double scale, double deshift)[] GetScales(double[][] data, double tMin, double tMax)
     {
         int rows = data.Length;
@@ -69,8 +71,19 @@ public static class Utilities
         return scales;
     }
     
+    /// <summary>
+    /// Saves the specified Network to the specified save file.
+    /// </summary>
+    /// <param name="filePath">The path for the save file.</param>
+    /// <param name="network">The Network to save.</param>
     public static void SaveToFile(string filePath, Network network) => File.WriteAllText(filePath, network.ToString());
 
+    /// <summary>
+    /// Loads a Network from its save file.
+    /// </summary>
+    /// <param name="filePath">The path of the save file.</param>
+    /// <returns>The loaded Network.</returns>
+    /// <exception cref="InvalidDataException"></exception>
     public static Network LoadFromFile(string filePath)
     {
         string[] lines = File.ReadAllLines(filePath);
@@ -137,6 +150,11 @@ public static class Utilities
         return network;
     }
     
+    /// <summary>
+    /// Instantiates an array shaped like the weights of the specified Network.
+    /// </summary>
+    /// <param name="network">The Network to create the array of.</param>
+    /// <returns>A weight-shaped array.</returns>
     public static double[][][] InstantiateWeightArray(Network network)
     {
         double[][][] arr = new double[network.GetLayerCount()][][];
@@ -151,6 +169,11 @@ public static class Utilities
         return arr;
     }
 
+    /// <summary>
+    /// Instantiates an array shaped like the biases of the specified Network.
+    /// </summary>
+    /// <param name="network">The Network to create the array of.</param>
+    /// <returns>A bias-shaped array.</returns>
     public static double[][] InstantiateBiasArray(Network network)
     {
         double[][] arr = new double[network.GetLayerCount()][];
@@ -159,6 +182,10 @@ public static class Utilities
         return arr;
     }
     
+    /// <summary>
+    /// Clears the specified weight array.
+    /// </summary>
+    /// <param name="networkWeights">The weight array to clear.</param>
     public static void ClearWeightArray(double[][][] networkWeights)
     {
         foreach (var layerWeights in networkWeights)
@@ -167,6 +194,10 @@ public static class Utilities
                     nodeWeights[w] = 0;
     }
 
+    /// <summary>
+    /// Clears the specified bias array.
+    /// </summary>
+    /// <param name="networkBiases">The bias array to clear.</param>
     public static void ClearBiasArray(double[][] networkBiases)
     {
         foreach (var layerBiases in networkBiases)
@@ -174,25 +205,43 @@ public static class Utilities
                 layerBiases[n] = 0;
     }
     
-    private static ThreadLocal<Random> _threadRandom = new (() => new Random(BitConverter.ToInt32(Guid.NewGuid().ToByteArray(), 0)));
-    
-    public static double NextDouble(double min, double max)
+    /// <summary>
+    /// Computes a semi-random double within the desired range.
+    /// </summary>
+    /// <param name="min">The minimum of the desired range.</param>
+    /// <param name="max">The maximum of the desired range.</param>
+    /// <returns></returns>
+    public static double RandomDouble(double min, double max)
     {
         Random random = _threadRandom.Value!;
         return min + random.NextDouble() * (max - min);
     }
 
+    /// <summary>
+    /// Sets the seed of the Random object.
+    /// </summary>
+    /// <param name="seed">The new seed.</param>
     public static void SetSeed(int seed)
     {
         _threadRandom = new  ThreadLocal<Random>(() => new Random(seed));
     }
     
-    public static (double[], double)[][] StoreSettings(Network network)
+    /// <summary>
+    /// Stores the parameters of the specified Network.
+    /// </summary>
+    /// <param name="network">The Network of which to store the parameters.</param>
+    /// <returns>The stored parameters of the specified Network.</returns>
+    public static (double[], double)[][] StoreParameters(Network network)
     {
         return network.GetLayers().Select(layer => layer.GetNodes().Select(node => (node.GetWeights().ToArray(), node.GetBias())).ToArray()).ToArray();
     }
 
-    public static void ExtractSettings((double[], double)[][] settings, Network network)
+    /// <summary>
+    /// Extracts the parameters into the specified Network.
+    /// </summary>
+    /// <param name="settings">The parameters to extract.</param>
+    /// <param name="network">The Network to apply those paramaters onto.</param>
+    public static void ExtractParameters((double[], double)[][] settings, Network network)
     {
         for (int l = 0; l < network.GetLayerCount(); l++)
         {
@@ -205,7 +254,12 @@ public static class Utilities
         }
     }
     
-    public static (double[][] inputs, double[][] outputs) GetData(string filePath)
+    /// <summary>
+    /// Fetches the data from a specified data file.
+    /// </summary>
+    /// <param name="filePath">The path of the data file.</param>
+    /// <returns>The Dataset read from the specified data file.</returns>
+    public static Dataset GetData(string filePath)
     {
         string[] dataString = File.ReadAllLines(filePath);
         double[][] inputs = new double[dataString.Length][];
@@ -216,10 +270,17 @@ public static class Utilities
             inputs[i] = parts[0].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
             outputs[i] = parts[1].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
         }
-        return (inputs, outputs);
+        return new Dataset(inputs, outputs);
     }
 
-    //Frankly I don't understand why there's no built in method for this. Do not use this on Object arrays.
+    /// <summary>
+    /// Creates a copy of primitive value arrays.
+    /// ⚠ Do not use this on reference-type arrays.
+    /// </summary>
+    /// <param name="original">The array to copy.</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns>The copied array.</returns>
+    //Frankly, I don't understand why there's no built-in method for this. Do not use this on Object arrays.
     internal static T[] CopyNonObjectArray<T>(T[] original)
     {
         T[] result = new T[original.Length];
