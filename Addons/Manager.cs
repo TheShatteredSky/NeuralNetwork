@@ -173,6 +173,16 @@ public class Manager
     {
         return _datasets[GetDatasetIndexFromName(name)];
     }
+
+    /// <summary>
+    /// Generates a deep copy of the Network with the specified name.
+    /// </summary>
+    /// <param name="name">The name of the Network to copy.</param>
+    /// <returns>A deep copy of the Network.</returns>
+    public Network CloneNetwork(string name)
+    {
+        return GenerateNetwork(name);
+    }
     
     /// <summary>
     /// Generates a deep copy of the Network with the specified name.
