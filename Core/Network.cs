@@ -136,10 +136,9 @@ public class Network
     
     /// <summary>
     /// Fetches the Layer array of this Network.
-    /// ⚠ This method returns a reference to the actual array this Network uses, modifying it will modify the that of Network too.
     /// </summary>
     /// <returns>This Network's Layer array./// </returns>
-    public Layer[] GetLayers() => _networkLayers;
+    public IReadOnlyList<Layer> GetLayers() => Utilities.ConvertToReadOnlyList(_networkLayers);
 
     /// <summary>
     /// Instantiates the input Layer of this Network.

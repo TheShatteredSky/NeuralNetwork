@@ -286,4 +286,10 @@ public static class Utilities
             result[i] = original[i];
         return result;
     }
+
+    internal static IReadOnlyList<T> ConvertToReadOnlyList<T>(T[] original)
+    {
+        IReadOnlyList<T> result = new List<T>(original);
+        return result;
+    }
 }

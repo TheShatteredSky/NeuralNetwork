@@ -109,11 +109,11 @@ public class SGDOptimizer : IOptimizer
                     for (int n = 0; n < downstreamLayer.GetSize(); n++)
                     {
                         Node downstreamNode = downstreamLayer[n];
-                        ushort[]? parents = downstreamNode.GetParents();
+                        IReadOnlyList<ushort>? parents = downstreamNode.GetParents();
                         if (parents == null) delta += downstreamNode.GetWeights()[nodeIndex] * nextLayerDeltas[n];
                         else
                         {
-                            for (int parentIndex = 0; parentIndex < parents.Length; parentIndex++)
+                            for (int parentIndex = 0; parentIndex < parents.Count; parentIndex++)
                                 if (parents[parentIndex] == nodeIndex)
                                     delta += downstreamNode.GetWeights()[parentIndex] * nextLayerDeltas[n];
                         }
@@ -164,7 +164,7 @@ public class SGDOptimizer : IOptimizer
         for (int l = 0; l < Network.GetLayerCount(); l++)
         {
             Layer layer = Network[l];
-            Node[] nodes = layer.GetNodes();
+            IReadOnlyList<Node> nodes = layer.GetNodes();
             NodeActivationRecord[] layerRecord = new NodeActivationRecord[layer.GetSize()];
             double[] layerOutputs = new double[layer.GetSize()];
             double[] weightedSums = layer.WeightedSums(layerInputs);

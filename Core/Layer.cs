@@ -24,11 +24,11 @@ public class Layer
     /// Indexer for the parameters of this Layer's Nodes.
     /// </summary>
     /// <param name="nodeIndex">The index of the Node.</param>
-    /// <param name="paramaterIndex">The index of the parameter, 0 to dimensions - 1 will return the specified weight, while dimensions will return the bias.</param>
-    public double this[int nodeIndex, int paramaterIndex]
+    /// <param name="parameterIndex">The index of the parameter, 0 to dimensions - 1 will return the specified weight, while dimensions will return the bias.</param>
+    public double this[int nodeIndex, int parameterIndex]
     {
-        get => _nodes[nodeIndex][paramaterIndex];
-        set => _nodes[nodeIndex][paramaterIndex] = value;
+        get => _nodes[nodeIndex][parameterIndex];
+        set => _nodes[nodeIndex][parameterIndex] = value;
     }
     
     /// <summary>
@@ -75,10 +75,9 @@ public class Layer
     
     /// <summary>
     /// Fetches this Layer's Node array.
-    /// ⚠ This method returns a reference to the actual Node array this Layer uses, modifying it will modify the that of this Layer too.
     /// </summary>
     /// <returns>The Node array of this Layer.</returns>
-    public Node[] GetNodes() => _nodes;
+    public IReadOnlyList<Node> GetNodes() => Utilities.ConvertToReadOnlyList(_nodes);
     
     /// <summary>
     /// Fetches this Layer's type.
