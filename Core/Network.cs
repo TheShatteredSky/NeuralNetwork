@@ -194,6 +194,7 @@ public class Network
     /// <param name="inputs">The inputs of the data.</param>
     /// <param name="outputs">The outputs of the data.</param>
     /// <returns>The unscaled inputs and outputs.</returns>
+    //Note: At no point should the input or output array be modified or returned.
     public (double[][] unscaledInputs, double[][] unscaledOuputs) UnscaledData(double[][] inputs, double[][] outputs)
     {
         (double[][] unscaledInputs, double[][] unscaledOuputs) unscaledData = (new double[inputs.Length][],  new double[outputs.Length][]);
@@ -210,6 +211,7 @@ public class Network
     /// <param name="inputs">The inputs of the data.</param>
     /// <param name="outputs">The outputs of the data.</param>
     /// <returns>The scaled inputs and outputs.</returns>
+    //Note: At no point should the input or output array be modified or returned.
     public (double[][] scaledInputs, double[][] scaledOuputs) ScaledData(double[][] inputs, double[][] outputs)
     {
         (double[][] scaledInputs, double[][] scaledOuputs) scaledData = (new double[inputs.Length][],  new double[outputs.Length][]);
@@ -225,6 +227,7 @@ public class Network
     /// </summary>
     /// <param name="inputs">The data to unscale.</param>
     /// <returns>The unscaled inputs.</returns>
+    //Note: At no point should the input array be modified or returned.
     public double[] UnscaledInputs(double[] inputs)
     {
         inputs = Utilities.CopyNonObjectArray(inputs);
@@ -239,6 +242,7 @@ public class Network
     /// </summary>
     /// <param name="inputs">The data to scale.</param>
     /// <returns>The scaled inputs.</returns>
+    //Note: At no point should the input array be modified or returned.
     public double[] ScaledInputs(double[] inputs)
     {
         inputs = Utilities.CopyNonObjectArray(inputs);
@@ -253,6 +257,7 @@ public class Network
     /// </summary>
     /// <param name="outputs">The data to unscale.</param>
     /// <returns>The unscaled outputs.</returns>
+    //Note: At no point should the output array be modified or returned.
     public double[] UnscaledOutputs(double[] outputs)
     {
         outputs = Utilities.CopyNonObjectArray(outputs);
@@ -267,6 +272,7 @@ public class Network
     /// </summary>
     /// <param name="outputs">The data to scale.</param>
     /// <returns>The scaled outputs.</returns>
+    //Note: At no point should the output array be modified or returned.
     public double[] ScaledOutputs(double[] outputs)
     {
         outputs = Utilities.CopyNonObjectArray(outputs);
@@ -282,6 +288,7 @@ public class Network
     /// <param name="inputs">The data to process.</param>
     /// <returns>The predictions of this Network for each piece of data.</returns>
     /// <exception cref="ArgumentException"></exception>
+    //Note: At no point should the input array be modified or returned.
     //TODO: Implemented parallel processing for this method. Will need to check that no issues arise.
     //UPDATE: There was a fucking issue, and it took me 2 hours to realize this caused it.
     //Reverted this shit since I'm too pissed to fix it correctly.
@@ -302,6 +309,7 @@ public class Network
     /// <param name="inputs">The data to process.</param>
     /// <returns>The predictions of this Network.</returns>
     /// <exception cref="ArgumentException"></exception>
+    //Note: At no point should the input array be modified or returned.
     internal double[] ProcessSingle(double[] inputs)
     {
         if (inputs.Length != this[0].GetSize()) throw new ArgumentException("Number of inputs does not match the size of the input Layer.");
@@ -319,6 +327,7 @@ public class Network
     /// <param name="lossType">The loss function.</param>
     /// <returns>The loss value of this Network on the specified data.</returns>
     /// <exception cref="ArgumentException"></exception>
+    //Note: At no point should the input or output array be modified or returned.
     public double Loss(double[][] inputs, double[][] outputs, LossType lossType)
     {
         double totalError = 0;
@@ -359,6 +368,7 @@ public class Network
     /// <param name="lossFunction">The loss function.</param>
     /// <returns>A string with the loss value and calculation insights.</returns>
     /// <exception cref="ArgumentException"></exception>
+    //Note: At no point should the input or output array be modified or returned.
     public string LossString(double[][] inputs, double[][] outputs, LossType lossFunction)
     {
         StringBuilder sb = new StringBuilder();

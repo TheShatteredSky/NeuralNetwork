@@ -78,6 +78,7 @@ public class Layer
     /// </summary>
     /// <param name="inputs">The Nodes' inputs.</param>
     /// <returns>The outputs of this Layer.</returns>
+    //Note: At no point should the input array be modified or returned.
     //TODO: Removed parallel processing because of race condition worries, recheck it later.
     internal double[] Process(double[] inputs)
     {
@@ -93,6 +94,7 @@ public class Layer
     /// </summary>
     /// <param name="inputs">The Nodes' inputs.</param>
     /// <returns>The weighted sums of this Layer.</returns>
+    //Note: At no point should the input array be modified or returned.
     //TODO: Removed parallel processing because of race condition worries, recheck it later.
     internal double[] WeightedSums(double[] inputs)
     {

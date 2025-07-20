@@ -1,6 +1,4 @@
 namespace NeuralNetwork.Core;
-
-using Addons; 
     
 /// <summary>
 /// A Node instance.
@@ -172,6 +170,7 @@ public class Node
    /// </summary>
    /// <param name="inputs">The original input array.</param>
    /// <returns>The filtered input array.</returns>
+   //Note: At no point should the input array be modified or returned.
    internal double[] NodeInputs(double[] inputs)
    {
        double[] copy = Utilities.CopyNonObjectArray(inputs);
@@ -185,6 +184,7 @@ public class Node
    /// <returns>The outputs of this Node.</returns>
    /// <exception cref="ArgumentException"></exception>
    /// <exception cref="Exception"></exception>
+   //Note: At no point should the input array be modified or returned.
    public double Process(double[] input)
    {
        double result = WeightedSum(input);
@@ -224,6 +224,7 @@ public class Node
    /// </summary>
    /// <param name="input">The inputs for this Node.</param>
    /// <returns>The weighted sum of this Node.</returns>
+   //Note: At no point should the input array be modified or returned.
    internal double WeightedSum(double[] input) => DotProduct(input) + _bias;
 
    /// <summary>
@@ -231,6 +232,7 @@ public class Node
    /// </summary>
    /// <param name="inputs">The inputs for this Node.</param>
    /// <returns>The dot product of this Node.</returns>
+   //Note: At no point should the input array be modified or returned.
    private double DotProduct(double[] inputs)
    {
        inputs = NodeInputs(inputs);

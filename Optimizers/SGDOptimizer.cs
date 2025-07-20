@@ -13,11 +13,16 @@ public class SGDOptimizer : IOptimizer
         LearningRate = baseLearningRate;
     }
     
-    public virtual void Optimize(double[][] inputs, double[][] outputs, uint totalEpochs)
+    /// <summary>
+    /// Optimizes the associated Network.
+    /// </summary>
+    /// <param name="data">The data to utilize.</param>
+    /// <param name="totalEpochs">The number of epochs.</param>
+    public virtual void Optimize(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
-        inputs = unscaled.unscaledInputs;
-        outputs = unscaled.unscaledOutputs;
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(data.GetInputs(), data.GetOutputs());
+        double[][] inputs = unscaled.unscaledInputs;
+        double[][] outputs = unscaled.unscaledOutputs;
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
         double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
@@ -27,11 +32,17 @@ public class SGDOptimizer : IOptimizer
         }
     }
 
-    public virtual double[] OptimizeTracked(double[][] inputs, double[][] outputs, uint totalEpochs)
+    /// <summary>
+    /// Optimizes the associated Networks and tracks the loss' evolution.
+    /// </summary>
+    /// <param name="data">The data to utilize.</param>
+    /// <param name="totalEpochs">The number of epochs.</param>
+    /// <returns>The evolution of the loss.</returns>
+    public virtual double[] OptimizeTracked(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
-        inputs = unscaled.unscaledInputs;
-        outputs = unscaled.unscaledOutputs;
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(data.GetInputs(), data.GetOutputs());
+        double[][] inputs = unscaled.unscaledInputs;
+        double[][] outputs = unscaled.unscaledOutputs;
         List<double> tracker = new List<double>();
         tracker.Add(Network.Loss(inputs, outputs, LossType));
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
@@ -48,6 +59,7 @@ public class SGDOptimizer : IOptimizer
         return tracker.ToArray();
     }
 
+    //Note: At no point should the data arrays be modified or returned, they should only be read.
     protected virtual void ExecuteEpoch(double[][][] weightGradientsForBatch, double[][] biasGradientsForBatch, double[][] inputs, double[][] outputs)
     {
         int sampleCount = outputs.Length;

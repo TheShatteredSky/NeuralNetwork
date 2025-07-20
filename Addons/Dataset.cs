@@ -16,7 +16,9 @@ public class Dataset
     public Dataset(double[][] inputs)
     {
         _name = null;
-        _inputs = inputs;
+        _inputs = new double[inputs.Length][];
+        for (int i = 0; i < inputs.Length; i++)
+            _inputs[i] = Utilities.CopyNonObjectArray(inputs[i]);
         _outputs = null;
     }
     
@@ -28,7 +30,9 @@ public class Dataset
     public Dataset(double[][] inputs, string name)
     {
         _name = name;
-        _inputs = inputs;
+        _inputs = new double[inputs.Length][];
+        for (int i = 0; i < inputs.Length; i++)
+            _inputs[i] = Utilities.CopyNonObjectArray(inputs[i]);
         _outputs = null;
     }
 
@@ -40,8 +44,12 @@ public class Dataset
     public Dataset(double[][] inputs, double[][] outputs)
     {
         _name = null;
-        _inputs = inputs;
-        _outputs = outputs;
+        _inputs = new double[inputs.Length][];
+        for (int i = 0; i < inputs.Length; i++)
+            _inputs[i] = Utilities.CopyNonObjectArray(inputs[i]);
+        _outputs = new double[outputs.Length][];
+        for (int i = 0; i < outputs.Length; i++)
+            _outputs[i] = Utilities.CopyNonObjectArray(outputs[i]);
     }
     
     /// <summary>
@@ -53,8 +61,12 @@ public class Dataset
     public Dataset(double[][] inputs, double[][] outputs, string name)
     {
         _name = name;
-        _inputs = inputs;
-        _outputs = outputs;
+        _inputs = new double[inputs.Length][];
+        for (int i = 0; i < inputs.Length; i++)
+            _inputs[i] = Utilities.CopyNonObjectArray(inputs[i]);
+        _outputs = new double[outputs.Length][];
+        for (int i = 0; i < outputs.Length; i++)
+            _outputs[i] = Utilities.CopyNonObjectArray(outputs[i]);
     }
     
     /// <summary>
@@ -87,11 +99,21 @@ public class Dataset
     /// Sets the inputs of this Dataset.
     /// </summary>
     /// <param name="inputs">The new inputs of this Dataset.</param>
-    public void SetInputs(double[][] inputs) => _inputs = inputs;
+    public void SetInputs(double[][] inputs)
+    { 
+        _inputs = new double[inputs.Length][];
+        for (int i = 0; i < inputs.Length; i++)
+            _inputs[i] = Utilities.CopyNonObjectArray(inputs[i]);
+    }
 
     /// <summary>
     /// Sets the outputs of this dataset.
     /// </summary>
     /// <param name="outputs">The new outputs of this Dataset.</param>
-    public void SetOutputs(double[][] outputs) => _outputs = outputs;
+    public void SetOutputs(double[][] outputs)
+    { 
+        _outputs = new double[outputs.Length][];
+        for (int i = 0; i < outputs.Length; i++)
+            _outputs[i] = Utilities.CopyNonObjectArray(outputs[i]);
+    }
 }

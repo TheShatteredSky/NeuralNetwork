@@ -1,5 +1,8 @@
 namespace NeuralNetwork.Optimizers;
 
+/// <summary>
+/// An instance of an Adaptive Moment Estimation Gradient Descent Optimizer.
+/// </summary>
 public sealed class AdamOptimizer : SGDOptimizer
 {
     private const double _decayRateOfFirstMoment = 0.9;
@@ -12,6 +15,12 @@ public sealed class AdamOptimizer : SGDOptimizer
     private double[][][] _weightSecondMoments;
     private double[][] _biasSecondMoments;
     
+    /// <summary>
+    /// Creates an AdamOptimizer.
+    /// </summary>
+    /// <param name="network">The Network this AdamOptimizer is based on.</param>
+    /// <param name="lossFunction">The loss function.</param>
+    /// <param name="baseLearningRate">The starting learning rate.</param>
     public AdamOptimizer(Network network, LossType lossFunction, double baseLearningRate) : base (network, lossFunction, baseLearningRate)
     {
         _weightFirstMoments = Utilities.InstantiateWeightArray(network);
@@ -21,33 +30,44 @@ public sealed class AdamOptimizer : SGDOptimizer
         _mutableDecayRateOfFirstMoment = _decayRateOfFirstMoment;
         _mutableDecayRateOfSecondMoment = _decayRateOfSecondMoment;
     }
-
-    public override void Optimize(double[][] inputs, double[][] outputs, uint totalEpochs)
+    
+    /// <summary>
+    /// Optimizes the associated Network.
+    /// </summary>
+    /// <param name="data">The data to utilize.</param>
+    /// <param name="totalEpochs">The number of epochs.</param>
+    public override void Optimize(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
-        inputs = unscaled.unscaledInputs;
-        outputs = unscaled.unscaledOutputs;
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(data.GetInputs(), data.GetOutputs());
+        double[][] inputs = unscaled.unscaledInputs;
+        double[][] outputs = unscaled.unscaledOutputs;
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
         double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
-            ExecuteEpoch(inputs, outputs, weightGradientsForBatch, biasGradientsForBatch);
+            ExecuteEpoch(weightGradientsForBatch, biasGradientsForBatch, inputs, outputs);
             if (epoch % 100 == 0 && epoch > 0) LearningRate *= 0.9995;
         }
     }
 
-    public override double[] OptimizeTracked(double[][] inputs, double[][] outputs, uint totalEpochs)
+    /// <summary>
+    /// Optimizes the associated Networks and tracks the loss' evolution.
+    /// </summary>
+    /// <param name="data">The data to utilize.</param>
+    /// <param name="totalEpochs">The number of epochs.</param>
+    /// <returns>The evolution of the loss.</returns>
+    public override double[] OptimizeTracked(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(inputs, outputs);
-        inputs = unscaled.unscaledInputs;
-        outputs = unscaled.unscaledOutputs;
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(data.GetInputs(), data.GetOutputs());
+        double[][] inputs = unscaled.unscaledInputs;
+        double[][] outputs = unscaled.unscaledOutputs;
         List<double> tracker = new List<double>();
         tracker.Add(Network.Loss(inputs, outputs, LossType));
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
         double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
-            ExecuteEpoch(inputs, outputs, weightGradientsForBatch, biasGradientsForBatch);
+            ExecuteEpoch(weightGradientsForBatch, biasGradientsForBatch, inputs, outputs);
             if (epoch % 100 == 0 && epoch > 0)
             {
                 tracker.Add(Network.Loss(inputs, outputs, LossType));
@@ -57,7 +77,8 @@ public sealed class AdamOptimizer : SGDOptimizer
         return tracker.ToArray();
     }
 
-    private void ExecuteEpoch(double[][] inputs, double[][] outputs, double[][][] weightGradientsForBatch, double[][] biasGradientsForBatch)
+    //Note: At no point should the data arrays be modified or returned, they should only be read.
+    protected override void ExecuteEpoch(double[][][] weightGradientsForBatch, double[][] biasGradientsForBatch, double[][] inputs, double[][] outputs)
     {
         int sampleCount = outputs.Length;
         int batchSize = 64;

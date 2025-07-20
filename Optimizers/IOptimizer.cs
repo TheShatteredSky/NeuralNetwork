@@ -2,6 +2,6 @@ namespace NeuralNetwork.Optimizers;
 
 internal interface IOptimizer
 {
-    void Optimize(double[][] inputs, double[][] outputs, uint totalEpochs);
-    double[] OptimizeTracked(double[][] inputs, double[][] outputs, uint totalEpochs);
+    void Optimize(Dataset data, uint totalEpochs);
+    double[] OptimizeTracked(Dataset data, uint totalEpochs);
 }

@@ -236,11 +236,11 @@ public class Manager
         {
             case OptimizerType.SGD:
                 SGDOptimizer optimizer = new SGDOptimizer(network, lossFunction, learningRate);
-                optimizer.Optimize(data.GetInputs(), data.GetOutputs(), epochs);
+                optimizer.Optimize(data, epochs);
                 break;
             case OptimizerType.Adam:
                 AdamOptimizer adam = new AdamOptimizer(network, lossFunction, learningRate);
-                adam.Optimize(data.GetInputs(), data.GetOutputs(), epochs);
+                adam.Optimize(data, epochs);
                 break;
         }
     }
@@ -293,7 +293,7 @@ public class Manager
                         Network attempt = GenerateNetwork(network);
                         attempt.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
-                        optimizer.Optimize(data.GetInputs(), data.GetOutputs(), epochs);
+                        optimizer.Optimize(data, epochs);
                         generations.Add((attempt, attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
                     });
                 }
@@ -306,7 +306,7 @@ public class Manager
                         Network attempt = GenerateNetwork(network);
                         attempt.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
-                        optimizer.Optimize(data.GetInputs(), data.GetOutputs(), epochs);
+                        optimizer.Optimize(data, epochs);
                         generations.Add((attempt, attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
                     });
                 }
@@ -361,7 +361,7 @@ public class Manager
                         Network attempt = GenerateNetwork(network);
                         attempt.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
-                        optimizer.Optimize(data.GetInputs(), data.GetOutputs(), epochs);
+                        optimizer.Optimize(data, epochs);
                         generations.Add(attempt);
                     });
                 }
@@ -374,7 +374,7 @@ public class Manager
                         Network attempt = GenerateNetwork(network);
                         attempt.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
-                        optimizer.Optimize(data.GetInputs(), data.GetOutputs(), epochs);
+                        optimizer.Optimize(data, epochs);
                         generations.Add(attempt);
                     });
                 }
@@ -430,7 +430,7 @@ public class Manager
                         Network attempt = GenerateNetwork(network);
                         attempt.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
-                        optimizer.Optimize(data.GetInputs(), data.GetOutputs(), epochs);
+                        optimizer.Optimize(data, epochs);
                         generations.Add(attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction));
                     });
                 }
@@ -443,7 +443,7 @@ public class Manager
                         Network attempt = GenerateNetwork(network);
                         attempt.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
-                        optimizer.Optimize(data.GetInputs(), data.GetOutputs(), epochs);
+                        optimizer.Optimize(data, epochs);
                         generations.Add(attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction));
                     });
                 }
