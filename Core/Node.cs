@@ -1,5 +1,7 @@
 namespace NeuralNetwork.Core;
 
+using Addons; 
+    
 /// <summary>
 /// A Node instance.
 /// </summary>
@@ -14,19 +16,19 @@ public class Node
    /// <summary>
    /// Indexer for this Node's parameters.
    /// </summary>
-   /// <param name="param">The index of the parameter, 0 to dimensions - 1 will return the specified weight, while dimensions will return the bias.</param>
-   public double this[int param]
+   /// <param name="parameterIndex">The index of the parameter, 0 to dimensions - 1 will return the specified weight, while dimensions will return the bias.</param>
+   public double this[int parameterIndex]
    {
-       get => param < _dimensions ? _weights[param] : _bias;
+       get => parameterIndex < _dimensions ? _weights[parameterIndex] : _bias;
        set
        {
-           if (param < _dimensions) _weights[param] = value;
+           if (parameterIndex < _dimensions) _weights[parameterIndex] = value;
            else _bias = value;
        }
    }
    
    /// <summary>
-   /// A new Node.
+   /// Creates a new Node with predefined parameters.
    /// </summary>
    /// <param name="dimensions">The number of inputs the Node takes.</param>
    /// <param name="weights">The Node's weights.</param>
@@ -39,14 +41,14 @@ public class Node
        if (dimensions != weights.Length) throw new ArgumentException("The number of dimensions does not match the number of weights.");
        _dimensions = dimensions;
        _activation = activation;
-       _weights = weights;
+       _weights = NetworkUtilities.CopyNonObjectArray(weights);
        _bias = bias;
        if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
-       _parents = parents;
+       _parents = parents == null ? null : NetworkUtilities.CopyNonObjectArray(parents);
    }
    
    /// <summary>
-   /// A new Node.
+   /// Creates a new Node.
    /// </summary>
    /// <param name="dimensions">The number of inputs the Node takes.</param>
    /// <param name="activation">The Node's activation function.</param>
@@ -76,7 +78,7 @@ public class Node
        _bias = 0;
        _activation = activation;
        if (parents != null && parents.Length > dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
-       _parents = parents;
+       _parents = parents == null ? null : NetworkUtilities.CopyNonObjectArray(parents);
    }
    
    /// <summary>
@@ -99,8 +101,7 @@ public class Node
    public void SetWeights(double[] weights)
    { 
        if (weights.Length != _dimensions) throw new ArgumentException("The given weight array is greater in size than the current, set a new size beforehand.");
-       for (int i = 0; i < weights.Length; i++)
-           _weights[i] = weights[i];
+       _weights = NetworkUtilities.CopyNonObjectArray(weights);
    }
    
    /// <summary>
@@ -123,7 +124,7 @@ public class Node
    public void SetParents(ushort[]? parents)
    {
        if (parents != null && parents.Length > _dimensions) throw new ArgumentException("The given parents are more numerous than the Node's dimensions.");
-       _parents = parents;
+       _parents = parents == null ? null : NetworkUtilities.CopyNonObjectArray(parents);
    } 
    
    /// <summary>
@@ -167,6 +168,17 @@ public class Node
    public ushort[]? GetParents() => _parents;
    
    /// <summary>
+   /// Filters the input array to only this Node's inputs.
+   /// </summary>
+   /// <param name="inputs">The original input array.</param>
+   /// <returns>The filtered input array.</returns>
+   internal double[] NodeInputs(double[] inputs)
+   {
+       double[] copy = NetworkUtilities.CopyNonObjectArray(inputs);
+       return _parents == null ? copy : _parents.Select(x => copy[x]).ToArray();
+   }
+   
+   /// <summary>
    /// Computes the outputs of this Node.
    /// </summary>
    /// <param name="input">The inputs for this Node.</param>
@@ -175,7 +187,6 @@ public class Node
    /// <exception cref="Exception"></exception>
    public double Process(double[] input)
    {
-       if (input.Length != _dimensions) throw new ArgumentException("The given input does not match the size expected by the Node.");
        double result = WeightedSum(input);
        switch (_activation)
        {
@@ -222,6 +233,7 @@ public class Node
    /// <returns>The dot product of this Node.</returns>
    private double DotProduct(double[] inputs)
    {
+       inputs = NodeInputs(inputs);
        int vectorSize = Vector<double>.Count;
        var sumVector = Vector<double>.Zero;
     

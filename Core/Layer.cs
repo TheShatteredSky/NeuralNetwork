@@ -1,31 +1,52 @@
 namespace NeuralNetwork.Core;
 
+/// <summary>
+/// A Layer instance.
+/// </summary>
 public class Layer
 {
     private ushort _size;
     private Node[] _nodes;
     private LayerType _type;
     
-    public Node this[int node]
+    /// <summary>
+    /// Indexer for this Layer's Nodes.
+    /// </summary>
+    /// <param name="nodeIndex">The index of the Node.</param>
+    public Node this[int nodeIndex]
     {
-        get => _nodes[node];
-        set => _nodes[node] = value;
+        get => _nodes[nodeIndex];
+        set => _nodes[nodeIndex] = value;
     }
     
-    public Layer(ushort identifier, LayerType type)
+    /// <summary>
+    /// Creates a new Layer of the specified type.
+    /// </summary>
+    /// <param name="type">This Layer's type.</param>
+    /// <exception cref="ArgumentException"></exception>
+    public Layer(LayerType type)
     {
-        if (identifier == 0 && type != LayerType.Input) throw new ArgumentException("Layer type of the first Layer cannot be non-input.");
         _type = type;
         _size = 0;
         _nodes = [];
     }
     
-    internal void InstantiateCustom(ushort size)
+    /// <summary>
+    /// Instantiates this Layer's Node array without creating its Nodes.
+    /// </summary>
+    /// <param name="size">This Layer's size.</param>
+    internal void Instantiate(ushort size)
     {
         _size = size;
         _nodes = new Node[size];
     }
     
+    /// <summary>
+    /// Instantiates this Layer's Node array and creates its Nodes.
+    /// </summary>
+    /// <param name="size">This Layer's size.</param>
+    /// <param name="previousLayerSize">The previous Layer's size. Note: This is needed because all Nodes are fully connected by default.</param>
+    /// <param name="activationType">The activation function for the Nodes of this Layer.</param>
     internal void Instantiate(ushort size, ushort previousLayerSize, ActivationType activationType)
     {
         _size = size;
@@ -34,44 +55,58 @@ public class Layer
             _nodes[i] = new Node((ushort)(_type == LayerType.Input ? 1 : previousLayerSize), activationType, _type == LayerType.Input ? [(ushort)i] : null);
     }
     
+    /// <summary>
+    /// Fetches the size (number of Nodes) of this Layer.
+    /// </summary>
+    /// <returns>The size of this Layer.</returns>
     public ushort GetSize() => _size;
     
+    /// <summary>
+    /// Fetches this Layer's Node array.
+    /// </summary>
+    /// <returns>The Node array of this Layer.</returns>
     public Node[] GetNodes() => _nodes;
     
+    /// <summary>
+    /// Fetches this Layer's type.
+    /// </summary>
+    /// <returns>The type of this Layer.</returns>
     public LayerType GetLayerType() => _type;
     
+    /// <summary>
+    /// Computes the outputs of this Layer's Nodes.
+    /// </summary>
+    /// <param name="inputs">The Nodes' inputs.</param>
+    /// <returns>The outputs of this Layer.</returns>
+    //TODO: Removed parallel processing because of race condition worries, recheck it later.
     internal double[] Process(double[] inputs)
     {
+        if (_nodes[0].GetActivation() == ActivationType.Softmax) return SoftmaxOutputs(WeightedSums(inputs));
         double[] results = new double[_size];
-        bool softmaxLayer = _nodes[0].GetActivation() == ActivationType.Softmax;
-        if (softmaxLayer) results = SoftmaxOutputs(WeightedSums(inputs));
-        else
-        {
-            Parallel.For(0, _size, n =>
-            {
-                double[] nodeInputs = NodeInputs(inputs, n);
-                results[n] = _nodes[n].Process(nodeInputs);
-            });
-        }
+            for (int n = 0; n < _size; n++)
+                results[n] = _nodes[n].Process(inputs);
         return results;
     }
 
+    /// <summary>
+    /// Computes the weighted sums of this Layer's Nodes.
+    /// </summary>
+    /// <param name="inputs">The Nodes' inputs.</param>
+    /// <returns>The weighted sums of this Layer.</returns>
+    //TODO: Removed parallel processing because of race condition worries, recheck it later.
     internal double[] WeightedSums(double[] inputs)
     {
         double[] results = new double[_size];
-        Parallel.For(0, _size, n =>
-        {
-            results[n] = _nodes[n].WeightedSum(NodeInputs(inputs, n)); 
-        });
+        for (int n = 0; n < _size; n++)
+            results[n] = _nodes[n].WeightedSum(inputs); 
         return results;
     }
 
-    internal double[] NodeInputs(double[] inputs, int n)
-    {
-        ushort[]? parents = _nodes[n].GetParents();
-        return parents == null ? inputs : parents.Select(x => inputs[x]).ToArray();
-    }
-
+    /// <summary>
+    /// Computes the outputs for the Softmax activation.
+    /// </summary>
+    /// <param name="weightedSums">The weighted sums of this Layer's Nodes.</param>
+    /// <returns>The outputs of this Layer's Nodes.</returns>
     internal double[] SoftmaxOutputs(double[] weightedSums)
     {
         double max = weightedSums.Max();
