@@ -327,66 +327,65 @@ public class Network
     /// <returns>The loss value of this Network on the specified data.</returns>
     /// <exception cref="ArgumentException"></exception>
     //Note: At no point should the input or output array be modified or returned.
-    public double Loss(double[][] inputs, double[][] outputs, LossType lossType)
+    public double Loss(Dataset data, LossType lossType)
     {
         double totalError = 0;
-        for (int i = 0; i < inputs.Length; i++)
+        for (int i = 0; i < data.GetInputs().Length; i++)
         {
-            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
-            double[] scaledPredictions = ProcessSingle(inputs[i]);
+            if (data.GetOutputs()[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
+            double[] scaledPredictions = ProcessSingle(data.GetInputs()[i]);
             double[] unscaledPredictions = UnscaledOutputs(scaledPredictions);
-            double[] unscaledOutputs = UnscaledOutputs(outputs[i]);
+            double[] unscaledOutputs = UnscaledOutputs(data.GetOutputs()[i]);
             double sampleLoss = 0;
             switch (lossType)
             {
                 case LossType.MSE:
-                    for (int j = 0; j < outputs[i].Length; j++)
+                    for (int j = 0; j < data.GetOutputs()[i].Length; j++)
                         sampleLoss += LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]);
-                    sampleLoss /= outputs[i].Length;
+                    sampleLoss /= data.GetOutputs()[i].Length;
                     break;
                 case LossType.BinaryCrossEntropy:
-                    for (int j = 0; j < outputs[i].Length; j++)
+                    for (int j = 0; j < data.GetOutputs()[i].Length; j++)
                         sampleLoss += LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
                     break;
                 case LossType.CategoricalCrossEntropy:
-                    for (int j = 0; j < outputs[i].Length; j++)
+                    for (int j = 0; j < data.GetOutputs()[i].Length; j++)
                         sampleLoss += LossFunction.CategoricalCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
                     break;
             }
             totalError += sampleLoss;
         }
 
-        return totalError / inputs.Length;
+        return totalError / data.GetInputs().Length;
     }
     
     /// <summary>
     /// Computes the loss of this Network with insights on the predictions.
     /// </summary>
-    /// <param name="inputs">The inputs of data.</param>
-    /// <param name="outputs">The outputs of data.</param>
+    /// <param name="data">The Dataset.</param>
     /// <param name="lossFunction">The loss function.</param>
     /// <returns>A string with the loss value and calculation insights.</returns>
     /// <exception cref="ArgumentException"></exception>
     //Note: At no point should the input or output array be modified or returned.
-    public string LossString(double[][] inputs, double[][] outputs, LossType lossFunction)
+    public string LossString(Dataset data, LossType lossFunction)
     {
         StringBuilder sb = new StringBuilder();
         double totalError = 0;
-        for (int i = 0; i < inputs.Length; i++)
+        for (int i = 0; i < data.GetInputs().Length; i++)
         {
-            if (outputs[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
+            if (data.GetOutputs()[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
             double currError = 0;
-            double[] scaledPredictions = ProcessSingle(inputs[i]);
+            double[] scaledPredictions = ProcessSingle(data.GetInputs()[i]);
             double[] unscaledPredictions = UnscaledOutputs(scaledPredictions);
-            double[] scaledOutputs = outputs[i];
-            double[] unscaledOutputs = UnscaledOutputs(outputs[i]);
-            for (int j = 0; j < outputs[i].Length; j++)
+            double[] scaledOutputs = data.GetOutputs()[i];
+            double[] unscaledOutputs = UnscaledOutputs(data.GetOutputs()[i]);
+            for (int j = 0; j < data.GetOutputs()[i].Length; j++)
             {
                 switch (lossFunction)
                 {
                     case LossType.MSE:
                         currError += LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]);
-                        currError /= outputs[i].Length;
+                        currError /= data.GetOutputs()[i].Length;
                         break;
                     case LossType.BinaryCrossEntropy:
                         currError += LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
@@ -398,8 +397,8 @@ public class Network
             }
             totalError += currError;
             sb.Append($"#{i} Input: ");
-            for (int k = 0; k < inputs[i].Length; k++)
-                sb.Append(inputs[i][k].ToString("F6", CultureInfo.InvariantCulture) + ";");
+            for (int k = 0; k < data.GetInputs()[i].Length; k++)
+                sb.Append(data.GetInputs()[i][k].ToString("F6", CultureInfo.InvariantCulture) + ";");
             sb.Append(" Predicted: ");
             foreach (var scaledPrediction in scaledPredictions)
                 sb.Append(scaledPrediction.ToString("F6", CultureInfo.InvariantCulture) + ";");
@@ -410,7 +409,7 @@ public class Network
             sb.AppendLine($" Loss: {currError.ToString("F6", CultureInfo.InvariantCulture)} Total: {totalError.ToString("F6", CultureInfo.InvariantCulture)}");
             
         }
-        totalError /= inputs.Length;
+        totalError /= data.GetInputs().Length;
         sb.AppendLine($"Loss: {totalError}");
         return sb.ToString();
     }

@@ -294,7 +294,7 @@ public class Manager
         ConcurrentBag<(Network, double)> generations = new();
         int coreCount = Environment.ProcessorCount;
         int cuts = (int)attempts / coreCount;
-        generations.Add((network, network.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+        generations.Add((network, network.Loss(data, lossFunction)));
         switch (optimizerType)
         {
             case OptimizerType.SGD:
@@ -306,7 +306,7 @@ public class Manager
                         attempt.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
-                        generations.Add((attempt, attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+                        generations.Add((attempt, attempt.Loss(data, lossFunction)));
                     });
                 }
                 break;
@@ -319,7 +319,7 @@ public class Manager
                         attempt.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
-                        generations.Add((attempt, attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+                        generations.Add((attempt, attempt.Loss(data, lossFunction)));
                     });
                 }
                 break;
@@ -332,7 +332,7 @@ public class Manager
         ConcurrentBag<(Network, double)> generations = new();
         int coreCount = Environment.ProcessorCount;
         int cuts = (int)attempts / coreCount;
-        generations.Add((network, network.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+        generations.Add((network, network.Loss(data, lossFunction)));
         switch (optimizerType)
         {
             case OptimizerType.SGD:
@@ -344,8 +344,8 @@ public class Manager
                         attempt.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
-                        if (_log) File.AppendAllTextAsync(_logPath, $"FindBest Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction) + "\n");
-                        generations.Add((attempt, attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+                        if (_log) File.AppendAllTextAsync(_logPath, $"FindBest Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data, lossFunction) + "\n");
+                        generations.Add((attempt, attempt.Loss(data, lossFunction)));
                     });
                 }
                 break;
@@ -358,8 +358,8 @@ public class Manager
                         attempt.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
-                        if (_log) File.AppendAllTextAsync(_logPath, $"FindBest Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction) + "\n");
-                        generations.Add((attempt, attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction)));
+                        if (_log) File.AppendAllTextAsync(_logPath, $"FindBest Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data, lossFunction) + "\n");
+                        generations.Add((attempt, attempt.Loss(data, lossFunction)));
                     });
                 }
                 break;
@@ -451,7 +451,7 @@ public class Manager
                         attempt.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
-                        if (_log) File.AppendAllTextAsync(_logPath, $"GenerateAndOptimizeAlternates Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction) + "\n");
+                        if (_log) File.AppendAllTextAsync(_logPath, $"GenerateAndOptimizeAlternates Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data, lossFunction) + "\n");
                         generations.Add(attempt);
                     });
                 }
@@ -465,7 +465,7 @@ public class Manager
                         attempt.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
-                        if (_log) File.AppendAllTextAsync(_logPath, $"GenerateAndOptimizeAlternates Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction) + "\n");
+                        if (_log) File.AppendAllTextAsync(_logPath, $"GenerateAndOptimizeAlternates Attempt #{id}:\n" + attempt + "\n" + attempt.Loss(data, lossFunction) + "\n");
                         generations.Add(attempt);
                     });
                 }
@@ -510,7 +510,7 @@ public class Manager
         ConcurrentBag<double> generations = new();
         int coreCount = Environment.ProcessorCount;
         int cuts = (int)attempts / coreCount;
-        generations.Add(network.Loss(data.GetInputs(), data.GetOutputs(), lossFunction));
+        generations.Add(network.Loss(data, lossFunction));
         switch (optimizerType)
         {
             case OptimizerType.SGD:
@@ -522,7 +522,7 @@ public class Manager
                         attempt.Randomize(-range, range);
                         SGDOptimizer optimizer = new SGDOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
-                        generations.Add(attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction));
+                        generations.Add(attempt.Loss(data, lossFunction));
                     });
                 }
                 break;
@@ -535,7 +535,7 @@ public class Manager
                         attempt.Randomize(-range, range);
                         AdamOptimizer optimizer = new AdamOptimizer(attempt, lossFunction, learningRate);
                         optimizer.Optimize(data, epochs);
-                        generations.Add(attempt.Loss(data.GetInputs(), data.GetOutputs(), lossFunction));
+                        generations.Add(attempt.Loss(data, lossFunction));
                     });
                 }
                 break;

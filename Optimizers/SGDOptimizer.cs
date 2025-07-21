@@ -76,7 +76,7 @@ public class SGDOptimizer : IOptimizer
         (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = _network.UnscaledData(data.GetInputs(), data.GetOutputs());
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
-        List<double> tracker = [_network.Loss(inputs, outputs, _lossType)];
+        List<double> tracker = [_network.Loss(data, _lossType)];
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(_network);
         double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(_network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
@@ -85,7 +85,7 @@ public class SGDOptimizer : IOptimizer
             if (epoch % 100 == 0 && epoch > 0)
             {
                 _learningRate *= 0.9995;
-                tracker.Add(_network.Loss(inputs, outputs, _lossType));
+                tracker.Add(_network.Loss(data, _lossType));
             }
         }
         return tracker.ToArray();
@@ -179,7 +179,31 @@ public class SGDOptimizer : IOptimizer
                 activationOutput = ActivationFunction.TanH(weightedSum);
                 activationDerivative = 1 - activationOutput * activationOutput;
                 break;
-            //TODO: Other derivatives
+            case ActivationType.AND:
+                activationOutput = ActivationFunction.AND(weightedSum);
+                activationDerivative = weightedSum - 0.5;
+                break;
+            case ActivationType.NAND:
+                activationOutput = ActivationFunction.NAND(weightedSum);
+                activationDerivative = -weightedSum + 0.5;
+                break;
+            case ActivationType.OR:
+                activationOutput = ActivationFunction.OR(weightedSum);
+                activationDerivative = -weightedSum + 1.5;
+                break;
+            case ActivationType.NOR:
+                activationOutput = ActivationFunction.NOR(weightedSum);
+                activationDerivative = weightedSum - 1.5;
+                break;
+            case ActivationType.EX:
+                activationOutput = ActivationFunction.EX(weightedSum);
+                activationDerivative = -2 * weightedSum + 2;
+                break;
+            case ActivationType.NEX:
+                activationOutput = ActivationFunction.NEX(weightedSum);
+                activationDerivative = 2 * weightedSum - 2;
+                break;
+            
         }
         return new NodeRecord {InputValues = node.NodeInputs(inputs), ActivationOutput = activationOutput, ActivationDerivative = activationDerivative};
     }

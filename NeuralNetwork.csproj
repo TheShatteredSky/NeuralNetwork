@@ -9,5 +9,9 @@
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <DocumentationFile>bin\Debug\net9.0\NeuralNetwork.xml</DocumentationFile>
     </PropertyGroup>
+    
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
 
 </Project>

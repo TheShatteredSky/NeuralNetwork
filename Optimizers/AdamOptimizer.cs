@@ -61,7 +61,7 @@ public sealed class AdamOptimizer : SGDOptimizer
         (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = GetNetwork().UnscaledData(data.GetInputs(), data.GetOutputs());
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
-        List<double> tracker = [GetNetwork().Loss(inputs, outputs, GetLossFunction())];
+        List<double> tracker = [GetNetwork().Loss(data, GetLossFunction())];
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(GetNetwork());
         double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(GetNetwork());
         for (int epoch = 0; epoch < totalEpochs; epoch++)
@@ -69,7 +69,7 @@ public sealed class AdamOptimizer : SGDOptimizer
             ExecuteEpoch(weightGradientsForBatch, biasGradientsForBatch, inputs, outputs);
             if (epoch % 100 == 0 && epoch > 0)
             {
-                tracker.Add(GetNetwork().Loss(inputs, outputs, GetLossFunction()));
+                tracker.Add(GetNetwork().Loss(data, GetLossFunction()));
                 SetLearningRate(GetLearningRate() * 0.9995);
             }
         }

@@ -238,7 +238,7 @@ public static class Utilities
     /// Extracts the parameters into the specified Network.
     /// </summary>
     /// <param name="settings">The parameters to extract.</param>
-    /// <param name="network">The Network to apply those paramaters onto.</param>
+    /// <param name="network">The Network to apply those parameters onto.</param>
     public static void ExtractParameters((double[], double)[][] settings, Network network)
     {
         for (int l = 0; l < network.GetLayerCount(); l++)
