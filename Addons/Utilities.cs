@@ -82,7 +82,7 @@ public static class Utilities
     /// <param name="filePath">The path of the save file.</param>
     /// <returns>The loaded Network.</returns>
     /// <exception cref="InvalidDataException"></exception>
-    public static Network LoadFromFile(string filePath)
+    public static Network LoadNetwork(string filePath)
     {
         string[] lines = File.ReadAllLines(filePath);
         if (lines.Length == 0) throw new InvalidDataException("File is empty.");
@@ -90,7 +90,7 @@ public static class Utilities
         string name = header[0];
         ushort layerCount = ushort.Parse(header[1]);
         Network network = new Network();
-        network.SetName(name);
+        if (name != "null") network.SetName(name);
         network.Instantiate(layerCount - 2);
         int currentLine = 1;
         for (int layerIdx = 0; layerIdx < layerCount; layerIdx++)
@@ -115,13 +115,13 @@ public static class Utilities
                 double[] weights = nodeData[1].Split(',').Select(w => double.Parse(w, CultureInfo.InvariantCulture)).ToArray();
                 double bias = double.Parse(nodeData[2], CultureInfo.InvariantCulture);
                 ActivationType activation = Enum.Parse<ActivationType>(nodeData[3]);
-                ushort[]? parents = nodeData[4] == "#" ? null : nodeData[4].Split(',').Select(ushort.Parse).ToArray();
+                ushort[]? parents = nodeData[4] == "null" ? null : nodeData[4].Split(',').Select(ushort.Parse).ToArray();
                 Node node = new Node(dimensions, weights, bias, activation, parents);
                 layer[nodeIndex] = node;
                 currentLine++;
             }
         }
-        if (lines[currentLine + 1] != "#")
+        if (lines[currentLine] != "null")
         {
             string[] inScales = lines[currentLine+1].Split(';'); 
             (double shift, double scale, double deshift)[] inputScales = new (double, double, double)[inScales.Length];
@@ -133,7 +133,7 @@ public static class Utilities
             }
             network.SetInputScaling(inputScales);
         }
-        if (lines[currentLine + 2] != "#")
+        if (lines[currentLine + 1] != "null")
         {
             string[] outScales = lines[currentLine + 2].Split(";");
             (double shift, double scale, double deshift)[] outputScales = new (double, double, double)[outScales.Length];
@@ -146,6 +146,26 @@ public static class Utilities
             network.SetOutputScaling(outputScales);
         }
         return network;
+    }
+    
+    /// <summary>
+    /// Loads a Dataset from its save file.
+    /// </summary>
+    /// <param name="filePath">The path of the save file.</param>
+    /// <returns>The loaded Dataset.</returns>
+    /// <exception cref="InvalidDataException"></exception>
+    public static Dataset LoadDataset(string filePath)
+    {
+        string[] dataString = File.ReadAllLines(filePath);
+        double[][] inputs = new double[dataString.Length][];
+        double[][] outputs = new double[dataString.Length][];
+        for (int i = 0; i < dataString.Length; i++)
+        {
+            string[] parts = dataString[i].Split(';');
+            inputs[i] = parts[0].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+            outputs[i] = parts[1].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+        }
+        return new Dataset(inputs, outputs);
     }
     
     /// <summary>
@@ -250,25 +270,6 @@ public static class Utilities
                     network[l,n, w] = settings[l][n].Item1[w];
             }
         }
-    }
-    
-    /// <summary>
-    /// Fetches the data from a specified data file.
-    /// </summary>
-    /// <param name="filePath">The path of the data file.</param>
-    /// <returns>The Dataset read from the specified data file.</returns>
-    public static Dataset GetData(string filePath)
-    {
-        string[] dataString = File.ReadAllLines(filePath);
-        double[][] inputs = new double[dataString.Length][];
-        double[][] outputs = new double[dataString.Length][];
-        for (int i = 0; i < dataString.Length; i++)
-        {
-            string[] parts = dataString[i].Split(';');
-            inputs[i] = parts[0].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
-            outputs[i] = parts[1].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
-        }
-        return new Dataset(inputs, outputs);
     }
 
     /// <summary>

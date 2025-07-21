@@ -135,6 +135,18 @@ public class Manager
     {
         return _networks.Contains(network);
     }
+
+    /// <summary>
+    /// Checks if this Manager contains the specified Dataset.
+    /// </summary>
+    /// <param name="name">The Dataset's name.</param>
+    /// <returns>True if it contains it, false otherwise.</returns>
+    public bool ContainsDataset(string name)
+    {
+        foreach (var dataset in _datasets)
+            if (dataset.GetName() == name) return true;
+        return false;
+    }
     
     /// <summary>
     /// Gets the index of a Dataset using its name.

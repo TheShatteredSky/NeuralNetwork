@@ -321,8 +321,7 @@ public class Network
     /// <summary>
     /// Computes the loss of this Network.
     /// </summary>
-    /// <param name="inputs">The inputs of data.</param>
-    /// <param name="outputs">The outputs of data.</param>
+    /// <param name="data">The data.</param>
     /// <param name="lossType">The loss function.</param>
     /// <returns>The loss value of this Network on the specified data.</returns>
     /// <exception cref="ArgumentException"></exception>
@@ -422,14 +421,13 @@ public class Network
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
-        sb.Append($"{_name};{_layerCount}\n");
+        sb.Append($"{_name ?? "null"};{_layerCount}\n");
         foreach (Layer layer in _networkLayers)
             sb.Append(layer);
-        sb.AppendLine("#SCALES");
-        if (_inputScaling == null) sb.AppendLine("#");
+        if (_inputScaling == null) sb.AppendLine("null");
         else for (int i = 0; i < _inputScaling.Length; i++)
             sb.Append(_inputScaling[i].shift + "," + _inputScaling[i].scale + "," + _inputScaling[i].deshift + (i == _inputScaling.Length - 1 ? "" : ";"));
-        if (_outputScaling == null) sb.AppendLine("#");
+        if (_outputScaling == null) sb.AppendLine("null");
         else for (int i = 0; i < _outputScaling.Length; i++)
             sb.Append(_outputScaling[i].shift + "," + _outputScaling[i].scale + "," + _outputScaling[i].deshift + (i == _outputScaling.Length - 1 ? "" : ";"));
         return sb.ToString();

@@ -245,5 +245,5 @@ public class Node
    /// ⚠ This is a custom format, not JSON.
    /// </summary>
    /// <returns>A string representing this Node.</returns>
-   public override string ToString() => $"{_dimensions};" + $"{string.Join(",", _weights.Select(w => w.ToString(CultureInfo.InvariantCulture)))};" + $"{_bias.ToString(CultureInfo.InvariantCulture)};" + $"{_activation};" + $"{(_parents == null ? "#" : string.Join(",", _parents))}" + "\n";
+   public override string ToString() => $"{_dimensions};" + $"{string.Join(",", _weights.Select(w => w.ToString(CultureInfo.InvariantCulture)))};" + $"{_bias.ToString(CultureInfo.InvariantCulture)};" + $"{_activation};" + $"{(_parents == null ? "null" : string.Join(",", _parents))}" + "\n";
 }
