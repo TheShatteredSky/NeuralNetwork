@@ -123,7 +123,7 @@ public static class Utilities
         }
         if (lines[currentLine] != "null")
         {
-            string[] inScales = lines[currentLine+1].Split(';'); 
+            string[] inScales = lines[currentLine].Split(';'); 
             (double shift, double scale, double deshift)[] inputScales = new (double, double, double)[inScales.Length];
             for (int i = 0; i < inScales.Length; i++)
             {
@@ -135,7 +135,7 @@ public static class Utilities
         }
         if (lines[currentLine + 1] != "null")
         {
-            string[] outScales = lines[currentLine + 2].Split(";");
+            string[] outScales = lines[currentLine + 1].Split(";");
             (double shift, double scale, double deshift)[] outputScales = new (double, double, double)[outScales.Length];
             for (int i = 0; i < outScales.Length; i++)
             {
