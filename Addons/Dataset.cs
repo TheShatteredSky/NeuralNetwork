@@ -27,7 +27,7 @@ public class Dataset
     /// </summary>
     /// <param name="inputs">The inputs of the dataset.</param>
     /// <param name="name">The name of the dataset.</param>
-    public Dataset(double[][] inputs, string name)
+    public Dataset(double[][] inputs, string? name)
     {
         _name = name;
         _inputs = new double[inputs.Length][];
@@ -58,7 +58,7 @@ public class Dataset
     /// <param name="inputs">The inputs of the Dataset.</param>
     /// <param name="outputs">The outputs of the Dataset.</param>
     /// <param name="name">The name of the Dataset.</param>
-    public Dataset(double[][] inputs, double[][] outputs, string name)
+    public Dataset(double[][] inputs, double[][] outputs, string? name)
     {
         _name = name;
         _inputs = new double[inputs.Length][];
@@ -87,7 +87,7 @@ public class Dataset
     /// </summary>
     /// <returns>This Dataset's outputs.</returns>
     /// <exception cref="Exception"></exception>
-    public double[][] GetOutputs() => _outputs ?? throw new Exception("This dataset doesn't have predefined outputs.");
+    public double[][]? GetOutputs() => _outputs;
 
     /// <summary>
     /// Sets the name of this Dataset.
@@ -117,10 +117,10 @@ public class Dataset
             _outputs[i] = Utilities.CopyNonObjectArray(outputs[i]);
     }
 
-    
-     /// <summary>
-     /// Shuffles the data array, if the output array exists, it will be shuffled identically to the input array.
-     /// </summary>
+
+    /// <summary>
+    /// Shuffles the data array, if the output array exists, it will be shuffled identically to the input array.
+    /// </summary>
     public void Shuffle()
     {
         Random random = new Random();
@@ -141,5 +141,35 @@ public class Dataset
                 (_outputs[i], _outputs[index]) = (_outputs[index], _outputs[i]);
             }
         }
+    }
+
+    public Dataset Clone()
+    {
+        if (_outputs == null) return new Dataset(_inputs, _name);
+        return new Dataset(_inputs, _outputs, _name);
+    }
+
+    /// <summary>
+    /// Returns a string representation of this Dataset.
+    /// </summary>
+    /// <returns>A string representing this Dataset.</returns>
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine(_name ?? "null");
+        if (_outputs == null)
+        {
+            for (int i = 0; i < _inputs.Length; i++)
+                sb.AppendLine(string.Join(",", _inputs[i]));
+        }
+        else
+        {
+            for (int i = 0; i < _inputs.Length; i++)
+            {
+                sb.Append(string.Join(",", _inputs[i]) + ";");
+                sb.AppendLine(string.Join(",", _outputs[i]));
+            }
+        }
+        return sb.ToString();
     }
 }

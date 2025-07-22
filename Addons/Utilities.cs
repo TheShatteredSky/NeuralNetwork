@@ -74,7 +74,14 @@ public static class Utilities
     /// </summary>
     /// <param name="filePath">The path for the save file.</param>
     /// <param name="network">The Network to save.</param>
-    public static void SaveToFile(string filePath, Network network) => File.WriteAllText(filePath, network.ToString());
+    public static void SaveNetwork(string filePath, Network network) => File.WriteAllTextAsync(filePath, network.ToString());
+
+    /// <summary>
+    /// Saves the specified Dataset to the specified save file.
+    /// </summary>
+    /// <param name="filePath">The path for the save file.</param>
+    /// <param name="dataset">The Dataset to save.</param>
+    public static void SaveDataset(string filePath, Dataset dataset) => File.AppendAllTextAsync(filePath, dataset.ToString());
 
     /// <summary>
     /// Loads a Network from its save file.
@@ -157,15 +164,15 @@ public static class Utilities
     public static Dataset LoadDataset(string filePath)
     {
         string[] dataString = File.ReadAllLines(filePath);
-        double[][] inputs = new double[dataString.Length][];
-        double[][] outputs = new double[dataString.Length][];
-        for (int i = 0; i < dataString.Length; i++)
+        double[][] inputs = new double[dataString.Length - 1][];
+        double[][] outputs = new double[dataString.Length - 1][];
+        for (int i = 0; i < dataString.Length - 1; i++)
         {
-            string[] parts = dataString[i].Split(';');
+            string[] parts = dataString[i + 1].Split(';');
             inputs[i] = parts[0].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
             outputs[i] = parts[1].Split(",").Select(x => double.Parse(x, CultureInfo.InvariantCulture)).ToArray();
         }
-        return new Dataset(inputs, outputs);
+        return new Dataset(inputs, outputs, dataString[0] == "null" ? null : dataString[0]);
     }
     
     /// <summary>

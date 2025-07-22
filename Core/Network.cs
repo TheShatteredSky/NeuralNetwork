@@ -104,17 +104,13 @@ public class Network
     /// Fetches the name of this Network.
     /// </summary>
     /// <returns>This Network's name.</returns>
-    public string GetName()
-    {
-        if (_name == null) throw new Exception("Network doesn't have a name.");
-        return _name;
-    }
+    public string? GetName() => _name;
     
     /// <summary>
     /// Sets the name of this Network.
     /// </summary>
     /// <param name="name">The new name of this Network</param>
-    public void SetName(string name) => _name = name;
+    public void SetName(string? name) => _name = name;
     
     /// <summary>
     /// Sets the input scaling of this Network.
@@ -424,10 +420,11 @@ public class Network
         sb.Append($"{_name ?? "null"};{_layerCount}\n");
         foreach (Layer layer in _networkLayers)
             sb.Append(layer);
-        if (_inputScaling == null) sb.AppendLine("null");
+        if (_inputScaling == null) sb.Append("null");
         else for (int i = 0; i < _inputScaling.Length; i++)
             sb.Append(_inputScaling[i].shift + "," + _inputScaling[i].scale + "," + _inputScaling[i].deshift + (i == _inputScaling.Length - 1 ? "" : ";"));
-        if (_outputScaling == null) sb.AppendLine("null");
+        sb.Append("\n");
+        if (_outputScaling == null) sb.Append("null");
         else for (int i = 0; i < _outputScaling.Length; i++)
             sb.Append(_outputScaling[i].shift + "," + _outputScaling[i].scale + "," + _outputScaling[i].deshift + (i == _outputScaling.Length - 1 ? "" : ";"));
         return sb.ToString();
