@@ -158,8 +158,11 @@ public class Node
    //Note: At no point should the input array be modified or returned.
    internal double[] NodeInputs(double[] inputs)
    {
-       double[] copy = Utilities.CopyNonObjectArray(inputs);
-       return _parents == null ? copy : _parents.Select(x => copy[x]).ToArray();
+       if (_parents == null) return Utilities.CopyNonObjectArray(inputs);
+       double[] results = new double[_parents.Length];
+       for (int i = 0; i < _parents.Length; i++)
+           results[i] = inputs[_parents[i]];
+       return results;
    }
    
    /// <summary>
@@ -223,20 +226,15 @@ public class Node
        inputs = NodeInputs(inputs);
        int vectorSize = Vector<double>.Count;
        var sumVector = Vector<double>.Zero;
-    
        for(int i=0; i <= inputs.Length - vectorSize; i += vectorSize)
        {
            var inputVector = new Vector<double>(inputs, i);
            var weightVector = new Vector<double>(_weights, i);
            sumVector += inputVector * weightVector;
        }
-    
        double sum = Vector.Dot(sumVector, Vector<double>.One);
-       
-       for(int i = inputs.Length - (inputs.Length % vectorSize); i < inputs.Length; i++)
-       {
+       for(int i = inputs.Length - inputs.Length % vectorSize; i < inputs.Length; i++)
            sum += inputs[i] * _weights[i];
-       }
        return sum;
    }
    

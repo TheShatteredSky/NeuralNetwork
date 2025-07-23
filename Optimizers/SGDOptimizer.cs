@@ -8,6 +8,8 @@ public class SGDOptimizer : IOptimizer
     private readonly Network _network;
     private readonly LossType _lossType;
     private double _learningRate;
+    //null is none, false is L1, true is L2
+    private bool? _regularization;
 
     /// <summary>
     /// Fetches the Network this SGDOptimizer is assigned too.
