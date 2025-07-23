@@ -327,24 +327,24 @@ public class Network
         double totalError = 0;
         for (int i = 0; i < data.GetInputs().Length; i++)
         {
-            if (data.GetOutputs()[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
+            if (data.GetOutputs()![i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
             double[] scaledPredictions = ProcessSingle(data.GetInputs()[i]);
             double[] unscaledPredictions = UnscaledOutputs(scaledPredictions);
-            double[] unscaledOutputs = UnscaledOutputs(data.GetOutputs()[i]);
+            double[] unscaledOutputs = UnscaledOutputs(data.GetOutputs()![i]);
             double sampleLoss = 0;
             switch (lossType)
             {
                 case LossType.MSE:
-                    for (int j = 0; j < data.GetOutputs()[i].Length; j++)
+                    for (int j = 0; j < data.GetOutputs()![i].Length; j++)
                         sampleLoss += LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]);
-                    sampleLoss /= data.GetOutputs()[i].Length;
+                    sampleLoss /= data.GetOutputs()![i].Length;
                     break;
                 case LossType.BinaryCrossEntropy:
-                    for (int j = 0; j < data.GetOutputs()[i].Length; j++)
+                    for (int j = 0; j < data.GetOutputs()![i].Length; j++)
                         sampleLoss += LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
                     break;
                 case LossType.CategoricalCrossEntropy:
-                    for (int j = 0; j < data.GetOutputs()[i].Length; j++)
+                    for (int j = 0; j < data.GetOutputs()![i].Length; j++)
                         sampleLoss += LossFunction.CategoricalCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
                     break;
             }

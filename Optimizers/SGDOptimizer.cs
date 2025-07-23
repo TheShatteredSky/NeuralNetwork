@@ -53,7 +53,7 @@ public class SGDOptimizer : IOptimizer
     /// <param name="totalEpochs">The number of epochs.</param>
     public virtual void Optimize(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = _network.UnscaledData(data.GetInputs(), data.GetOutputs());
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = _network.UnscaledData(data.GetInputs(), data.GetOutputs()!);
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(_network);
@@ -73,7 +73,7 @@ public class SGDOptimizer : IOptimizer
     /// <returns>The evolution of the loss.</returns>
     public virtual double[] OptimizeTracked(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = _network.UnscaledData(data.GetInputs(), data.GetOutputs());
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = _network.UnscaledData(data.GetInputs(), data.GetOutputs()!);
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
         List<double> tracker = [_network.Loss(data, _lossType)];

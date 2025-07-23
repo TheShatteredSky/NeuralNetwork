@@ -141,8 +141,12 @@ public class Dataset
                 (_outputs[i], _outputs[index]) = (_outputs[index], _outputs[i]);
             }
         }
-    }
-
+    } 
+    
+    /// <summary>
+    /// Clones this Dataset.
+    /// </summary>
+    /// <returns>A copy of this Dataset.</returns>
     public Dataset Clone()
     {
         if (_outputs == null) return new Dataset(_inputs, _name);

@@ -38,7 +38,7 @@ public sealed class AdamOptimizer : SGDOptimizer
     /// <param name="totalEpochs">The number of epochs.</param>
     public override void Optimize(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = GetNetwork().UnscaledData(data.GetInputs(), data.GetOutputs());
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = GetNetwork().UnscaledData(data.GetInputs(), data.GetOutputs()!);
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
         double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(GetNetwork());
@@ -58,7 +58,7 @@ public sealed class AdamOptimizer : SGDOptimizer
     /// <returns>The evolution of the loss.</returns>
     public override double[] OptimizeTracked(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = GetNetwork().UnscaledData(data.GetInputs(), data.GetOutputs());
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = GetNetwork().UnscaledData(data.GetInputs(), data.GetOutputs()!);
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
         List<double> tracker = [GetNetwork().Loss(data, GetLossFunction())];
