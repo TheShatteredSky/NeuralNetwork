@@ -331,24 +331,24 @@ public class Network
             double[] scaledPredictions = ProcessSingle(data.GetInputs()[i]);
             double[] unscaledPredictions = UnscaledOutputs(scaledPredictions);
             double[] unscaledOutputs = UnscaledOutputs(data.GetOutputs()![i]);
-            double sampleLoss = 0;
+            double entryLoss = 0;
             switch (lossType)
             {
                 case LossType.MSE:
                     for (int j = 0; j < data.GetOutputs()![i].Length; j++)
-                        sampleLoss += LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]);
-                    sampleLoss /= data.GetOutputs()![i].Length;
+                        entryLoss += LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]);
+                    entryLoss /= data.GetOutputs()![i].Length;
                     break;
                 case LossType.BinaryCrossEntropy:
                     for (int j = 0; j < data.GetOutputs()![i].Length; j++)
-                        sampleLoss += LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
+                        entryLoss += LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
                     break;
                 case LossType.CategoricalCrossEntropy:
                     for (int j = 0; j < data.GetOutputs()![i].Length; j++)
-                        sampleLoss += LossFunction.CategoricalCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
+                        entryLoss += LossFunction.CategoricalCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
                     break;
             }
-            totalError += sampleLoss;
+            totalError += entryLoss;
         }
 
         return totalError / data.GetInputs().Length;
@@ -358,11 +358,11 @@ public class Network
     /// Computes the losses of each data entry for this Network.
     /// </summary>
     /// <param name="data">The Dataset.</param>
-    /// <param name="lossFunction">The loss function.</param>
+    /// <param name="lossType">The loss function.</param>
     /// <returns>The losses for each data entry.</returns>
     /// <exception cref="ArgumentException"></exception>
     //Note: At no point should the input or output array be modified or returned.
-    public double[] Losses(Dataset data, LossType lossFunction)
+    public double[] Losses(Dataset data, LossType lossType)
     {
         double[] losses = new double[data.GetInputs().Length];
         for (int i = 0; i < data.GetInputs().Length; i++)
@@ -371,22 +371,24 @@ public class Network
             double[] scaledPredictions = ProcessSingle(data.GetInputs()[i]);
             double[] unscaledPredictions = UnscaledOutputs(scaledPredictions);
             double[] unscaledOutputs = UnscaledOutputs(data.GetOutputs()![i]);
-            for (int j = 0; j < data.GetOutputs()![i].Length; j++)
+            double entryLoss = 0;
+            switch (lossType)
             {
-                switch (lossFunction)
-                {
-                    case LossType.MSE:
-                        losses[i] = LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]) / data.GetOutputs()![i].Length;
-                        break;
-                    case LossType.BinaryCrossEntropy:
-                        losses[i] = LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
-                        break;
-                    case LossType.CategoricalCrossEntropy:
-                        losses[i] = LossFunction.CategoricalCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
-                        break;
-                }
+                case LossType.MSE:
+                    for (int j = 0; j < data.GetOutputs()![i].Length; j++)
+                        entryLoss += LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]);
+                    entryLoss /= data.GetOutputs()![i].Length;
+                    break;
+                case LossType.BinaryCrossEntropy:
+                    for (int j = 0; j < data.GetOutputs()![i].Length; j++)
+                        entryLoss += LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
+                    break;
+                case LossType.CategoricalCrossEntropy:
+                    for (int j = 0; j < data.GetOutputs()![i].Length; j++)
+                        entryLoss += LossFunction.CategoricalCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
+                    break;
             }
-            
+            losses[i] = entryLoss;
         }
         return losses;
     }
@@ -404,11 +406,11 @@ public class Network
             sb.Append(layer);
         if (_inputScaling == null) sb.Append("null");
         else for (int i = 0; i < _inputScaling.Length; i++)
-            sb.Append(_inputScaling[i].shift + "," + _inputScaling[i].scale + "," + _inputScaling[i].deshift + (i == _inputScaling.Length - 1 ? "" : ";"));
+            sb.Append(_inputScaling[i].shift.ToString(CultureInfo.InvariantCulture) + "," + _inputScaling[i].scale.ToString(CultureInfo.InvariantCulture) + "," + _inputScaling[i].deshift.ToString(CultureInfo.InvariantCulture) + (i == _inputScaling.Length - 1 ? "" : ";"));
         sb.Append("\n");
         if (_outputScaling == null) sb.Append("null");
         else for (int i = 0; i < _outputScaling.Length; i++)
-            sb.Append(_outputScaling[i].shift + "," + _outputScaling[i].scale + "," + _outputScaling[i].deshift + (i == _outputScaling.Length - 1 ? "" : ";"));
+            sb.Append(_outputScaling[i].shift.ToString(CultureInfo.InvariantCulture) + "," + _outputScaling[i].scale.ToString(CultureInfo.InvariantCulture) + "," + _outputScaling[i].deshift.ToString(CultureInfo.InvariantCulture) + (i == _outputScaling.Length - 1 ? "" : ";"));
         return sb.ToString();
     }
 
