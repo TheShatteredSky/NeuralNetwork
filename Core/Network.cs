@@ -355,58 +355,40 @@ public class Network
     }
     
     /// <summary>
-    /// Computes the loss of this Network with insights on the predictions.
+    /// Computes the losses of each data entry for this Network.
     /// </summary>
     /// <param name="data">The Dataset.</param>
     /// <param name="lossFunction">The loss function.</param>
-    /// <returns>A string with the loss value and calculation insights.</returns>
+    /// <returns>The losses for each data entry.</returns>
     /// <exception cref="ArgumentException"></exception>
     //Note: At no point should the input or output array be modified or returned.
-    public string LossString(Dataset data, LossType lossFunction)
+    public double[] Losses(Dataset data, LossType lossFunction)
     {
-        StringBuilder sb = new StringBuilder();
-        double totalError = 0;
+        double[] losses = new double[data.GetInputs().Length];
         for (int i = 0; i < data.GetInputs().Length; i++)
         {
-            if (data.GetOutputs()[i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
-            double currError = 0;
+            if (data.GetOutputs()![i].Length != this[_layerCount - 1].GetSize()) throw new ArgumentException($"Number of expected outputs does not match the number of outputs this Network generates. (Sample #{i})");
             double[] scaledPredictions = ProcessSingle(data.GetInputs()[i]);
             double[] unscaledPredictions = UnscaledOutputs(scaledPredictions);
-            double[] scaledOutputs = data.GetOutputs()[i];
-            double[] unscaledOutputs = UnscaledOutputs(data.GetOutputs()[i]);
-            for (int j = 0; j < data.GetOutputs()[i].Length; j++)
+            double[] unscaledOutputs = UnscaledOutputs(data.GetOutputs()![i]);
+            for (int j = 0; j < data.GetOutputs()![i].Length; j++)
             {
                 switch (lossFunction)
                 {
                     case LossType.MSE:
-                        currError += LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]);
-                        currError /= data.GetOutputs()[i].Length;
+                        losses[i] = LossFunction.MSE(unscaledPredictions[j], unscaledOutputs[j]) / data.GetOutputs()![i].Length;
                         break;
                     case LossType.BinaryCrossEntropy:
-                        currError += LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
+                        losses[i] = LossFunction.BinaryCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
                         break;
                     case LossType.CategoricalCrossEntropy:
-                        currError += LossFunction.CategoricalCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
+                        losses[i] = LossFunction.CategoricalCrossEntropy(unscaledPredictions[j], unscaledOutputs[j]);
                         break;
                 }
             }
-            totalError += currError;
-            sb.Append($"#{i} Input: ");
-            for (int k = 0; k < data.GetInputs()[i].Length; k++)
-                sb.Append(data.GetInputs()[i][k].ToString("F6", CultureInfo.InvariantCulture) + ";");
-            sb.Append(" Predicted: ");
-            foreach (var scaledPrediction in scaledPredictions)
-                sb.Append(scaledPrediction.ToString("F6", CultureInfo.InvariantCulture) + ";");
-            sb.Append(" Expected: ");
-            foreach (var scaledOutput in scaledOutputs)
-                sb.Append(scaledOutput.ToString("F6", CultureInfo.InvariantCulture) + ";");
-
-            sb.AppendLine($" Loss: {currError.ToString("F6", CultureInfo.InvariantCulture)} Total: {totalError.ToString("F6", CultureInfo.InvariantCulture)}");
             
         }
-        totalError /= data.GetInputs().Length;
-        sb.AppendLine($"Loss: {totalError}");
-        return sb.ToString();
+        return losses;
     }
     
     /// <summary>
