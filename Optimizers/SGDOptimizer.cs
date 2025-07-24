@@ -32,6 +32,9 @@ public class SGDOptimizer : IOptimizer
 
     public bool? GetRegularization() => L1Regularization;
     public void SetRegularization(bool? reg) => L1Regularization = reg;
+
+    public double GetRegularizationFactor() => RegularizationFactor;
+    public void SetRegularizationFactor(double factor) => RegularizationFactor = factor;
     
     /// <summary>
     /// Optimizes the associated Network.
