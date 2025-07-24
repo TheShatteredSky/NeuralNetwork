@@ -38,15 +38,15 @@ public sealed class AdamOptimizer : SGDOptimizer
     /// <param name="totalEpochs">The number of epochs.</param>
     public override void Optimize(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = GetNetwork().UnscaledData(data.GetInputs(), data.GetOutputs()!);
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(data.GetInputs(), data.GetOutputs()!);
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
-        double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(GetNetwork());
-        double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(GetNetwork());
+        double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
+        double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
             ExecuteEpoch(weightGradientsForBatch, biasGradientsForBatch, inputs, outputs);
-            if (epoch % 100 == 0 && epoch > 0)  SetLearningRate(GetLearningRate() * 0.9995);
+            if (epoch % 100 == 0 && epoch > 0) LearningRate *= LearningRateDecay;
         }
     }
 
@@ -58,19 +58,19 @@ public sealed class AdamOptimizer : SGDOptimizer
     /// <returns>The evolution of the loss.</returns>
     public override double[] OptimizeTracked(Dataset data, uint totalEpochs)
     {
-        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = GetNetwork().UnscaledData(data.GetInputs(), data.GetOutputs()!);
+        (double[][] unscaledInputs, double[][] unscaledOutputs) unscaled = Network.UnscaledData(data.GetInputs(), data.GetOutputs()!);
         double[][] inputs = unscaled.unscaledInputs;
         double[][] outputs = unscaled.unscaledOutputs;
-        List<double> tracker = [GetNetwork().Loss(data, GetLossFunction())];
-        double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(GetNetwork());
-        double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(GetNetwork());
+        List<double> tracker = [Network.Loss(data, LossType)];
+        double[][][] weightGradientsForBatch = Utilities.InstantiateWeightArray(Network);
+        double[][] biasGradientsForBatch = Utilities.InstantiateBiasArray(Network);
         for (int epoch = 0; epoch < totalEpochs; epoch++)
         {
             ExecuteEpoch(weightGradientsForBatch, biasGradientsForBatch, inputs, outputs);
             if (epoch % 100 == 0 && epoch > 0)
             {
-                tracker.Add(GetNetwork().Loss(data, GetLossFunction()));
-                SetLearningRate(GetLearningRate() * 0.9995);
+                LearningRate *= LearningRateDecay;
+                tracker.Add(Network.Loss(data, LossType));
             }
         }
         return tracker.ToArray();
@@ -92,9 +92,9 @@ public sealed class AdamOptimizer : SGDOptimizer
             Utilities.ClearBiasArray(biasGradientsForBatch);
             for (int sampleIndex = batchIndex * batchSize; sampleIndex < sampleCount && sampleIndex < batchIndex * batchSize + batchSize; sampleIndex++)
             {
-                double[][][] weightGradientsPerLayer = Utilities.InstantiateWeightArray(GetNetwork());
-                double[][] biasGradientsPerLayer = Utilities.InstantiateBiasArray(GetNetwork());
-                NodeRecord[][] forwardPassRecords = new NodeRecord[GetNetwork().GetLayerCount()][];
+                double[][][] weightGradientsPerLayer = Utilities.InstantiateWeightArray(Network);
+                double[][] biasGradientsPerLayer = Utilities.InstantiateBiasArray(Network);
+                NodeRecord[][] forwardPassRecords = new NodeRecord[Network.GetLayerCount()][];
                 double[] layerInputs = new double[inputs[sampleIndex].Length];
                 for (int i = 0; i < inputs[sampleIndex].Length; i++)
                     layerInputs[i] = inputs[sampleIndex][i];
@@ -105,24 +105,9 @@ public sealed class AdamOptimizer : SGDOptimizer
             }
             int currentBatchSize = Math.Min(64, sampleCount - batchSize * (batchIndex - 1));
             ScaleGradients(weightGradientsForBatch, biasGradientsForBatch, currentBatchSize);
+            ApplyRegularizationToGradients(weightGradientsForBatch);
             UpdateMoments(weightGradientsForBatch, biasGradientsForBatch);
-            ApplyGradients(weightGradientsForBatch, biasGradientsForBatch, batchSize, GetNetwork(), GetLearningRate());
-        }
-    }
-
-    /// <summary>
-    /// Divides all gradients by a constant (equal to the batch size).
-    /// </summary>
-    private void ScaleGradients(double[][][] weightGradientsForBatch, double[][] biasGradientsForBatch, int size)
-    {
-        for (int layerIndex = 0; layerIndex < weightGradientsForBatch.Length; layerIndex++)
-        {
-            for (int nodeIndex = 0; nodeIndex < weightGradientsForBatch[layerIndex].Length; nodeIndex++)
-            {
-                for (int weightIndex = 0; weightIndex < weightGradientsForBatch[layerIndex][nodeIndex].Length; weightIndex++)
-                    weightGradientsForBatch[layerIndex][nodeIndex][weightIndex] /= size;
-                biasGradientsForBatch[layerIndex][nodeIndex] /= size;
-            }
+            ApplyGradients(weightGradientsForBatch, biasGradientsForBatch, Network, LearningRate);
         }
     }
     
@@ -151,7 +136,7 @@ public sealed class AdamOptimizer : SGDOptimizer
     /// <summary>
     /// Applies the specified gradients to the assigned Network.
     /// </summary>
-    protected override void ApplyGradients(double[][][] totalWeightGradients, double[][] totalBiasGradients, int sampleCount, Network network, double learningRate)
+    protected override void ApplyGradients(double[][][] totalWeightGradients, double[][] totalBiasGradients, Network network, double learningRate)
     {
         for (int layerIndex = 0; layerIndex < network.GetLayerCount(); layerIndex++)
         {
@@ -163,11 +148,11 @@ public sealed class AdamOptimizer : SGDOptimizer
                 {
                     double correctedWeightFirstMoment = _weightFirstMoments[layerIndex][nodeIndex][weightIndex] / decayRateOfFirstMomentReciprocal;
                     double correctedWeightSecondMoment = _weightSecondMoments[layerIndex][nodeIndex][weightIndex] / decayRateOfSecondMomentReciprocal;
-                    network[layerIndex, nodeIndex, weightIndex] -= GetLearningRate() * correctedWeightFirstMoment / (Math.Sqrt(correctedWeightSecondMoment) + _epsilon);
+                    network[layerIndex, nodeIndex, weightIndex] -= LearningRate * correctedWeightFirstMoment / (Math.Sqrt(correctedWeightSecondMoment) + _epsilon);
                 }
                 double correctedBiasFirstMoment = _biasFirstMoments[layerIndex][nodeIndex] / decayRateOfFirstMomentReciprocal;
                 double correctedBiasSecondMoment = _biasSecondMoments[layerIndex][nodeIndex] / decayRateOfSecondMomentReciprocal;
-                network[layerIndex, nodeIndex, network[layerIndex, nodeIndex].GetSize()] -= GetLearningRate() * correctedBiasFirstMoment / (Math.Sqrt(correctedBiasSecondMoment) + _epsilon);
+                network[layerIndex, nodeIndex, network[layerIndex, nodeIndex].GetSize()] -= LearningRate * correctedBiasFirstMoment / (Math.Sqrt(correctedBiasSecondMoment) + _epsilon);
             }
         }
         _mutableDecayRateOfFirstMoment *= _decayRateOfFirstMoment;
